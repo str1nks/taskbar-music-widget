@@ -1758,6 +1758,14 @@ static void Render(HWND hwnd) {
                 int v = (int)(255 * t + 0.5);
                 RECT rc = {g_btnLeft + i * CellW() - shift, g_oyC, g_btnLeft + (i + 1) * CellW() - shift,
                            g_oyC + g_hc};
+                // мягкая круглая подсветка кнопки под курсором
+                const double hv = g_hotT[i + 1] * t * compFade;
+                if (hv > 0.01) {
+                    float ccx = (rc.left + rc.right) * 0.5f, ccy = (rc.top + rc.bottom) * 0.5f;
+                    float hr = (float)std::min(CellW() / 2 - S(3), g_hc / 2 - S(2)) * (0.9f + 0.1f * (float)g_hotT[i + 1]);
+                    FillRR(px, ccx - hr, ccy - hr, ccx + hr, ccy + hr, hr, g_set.r, g_set.g, g_set.b,
+                           (unsigned)(255.0 * 0.18 * hv + 0.5));
+                }
                 DrawTextRect(mm, fIcon, RGB(0, 0, v), glyphs[i], rc, DT_CENTER | DT_VCENTER);
             }
         }
@@ -1933,11 +1941,11 @@ static bool Layout() {
 
 // Полноэкранное приложение именно на мониторе с панелью задач (игра, видео и т.п.).
 // Не считаем таковыми: окна самого explorer (Alt-Tab, Task View, Пуск, рабочий стол),
-// обычные развёрнутые окна и всё, что открыто на другом мониторе.
+// обычные развёрнутые окна (они не перекрывают панель задач) и всё, что открыто на другом мониторе.
 static bool IsFullscreenOtherApp() {
     HWND fg = GetForegroundWindow();
     if (!fg || fg == g_hwnd) return false;
-    if (!IsWindowVisible(fg) || IsIconic(fg) || IsZoomed(fg)) return false;
+    if (!IsWindowVisible(fg) || IsIconic(fg)) return false;
 
     DWORD pid = 0;
     GetWindowThreadProcessId(fg, &pid);
@@ -1953,8 +1961,22 @@ static bool IsFullscreenOtherApp() {
     if (!GetWindowRect(fg, &r)) return false;
     MONITORINFO mi = {sizeof(mi)};
     if (!GetMonitorInfoW(monFg, &mi)) return false;
-    return r.left <= mi.rcMonitor.left && r.top <= mi.rcMonitor.top &&
-           r.right >= mi.rcMonitor.right && r.bottom >= mi.rcMonitor.bottom;
+    const int tol = 2;  // небольшой допуск на округления/DPI
+    bool covers = r.left <= mi.rcMonitor.left + tol && r.top <= mi.rcMonitor.top + tol &&
+                  r.right >= mi.rcMonitor.right - tol && r.bottom >= mi.rcMonitor.bottom - tol;
+
+    // Обычное (не развёрнутое) окно, закрывающее весь монитор: игра в безрамочном окне, плеер и т.п.
+    if (covers && !IsZoomed(fg)) return true;
+
+    // Браузер/плеер в полноэкранном режиме часто остаётся «развёрнутым» (IsZoomed), а обычное
+    // развёрнутое окно панель задач не перекрывает. Различаем их по состоянию, которое определяет
+    // сама оболочка Windows (полноэкранное приложение / D3D-игра / режим презентации).
+    QUERY_USER_NOTIFICATION_STATE qs = QUNS_ACCEPTS_NOTIFICATIONS;
+    bool shellFull = SUCCEEDED(SHQueryUserNotificationState(&qs)) &&
+                     (qs == QUNS_BUSY || qs == QUNS_RUNNING_D3D_FULL_SCREEN ||
+                      qs == QUNS_PRESENTATION_MODE);
+    if (IsZoomed(fg)) return covers && shellFull;
+    return shellFull;  // окно не точно по размеру монитора, но оболочка считает его полноэкранным
 }
 
 // Прячем только если «полноэкранность» держится дольше 500 мс —
@@ -2005,6 +2027,7 @@ static void CALLBACK WinEventProc(HWINEVENTHOOK, DWORD, HWND, LONG, LONG, DWORD,
 
 static void SetExpanded(HWND h, bool on) {
     g_expand = on;
+    g_hot = 0;  // подсветка кнопок компактного режима не должна «переезжать» в развёрнутый
     KillTimer(h, 7);
     if (on) PollVolume();
     StartAnim(h);
@@ -2063,7 +2086,7 @@ static LRESULT CALLBACK WndProc(HWND h, UINT m, WPARAM w, LPARAM l) {
                 StartAnim(h);  // перерисовку делает таймер анимации
             }
             g_btn = ExpMode() ? 0 : HitBtn(mx);
-            int hot = 0;
+            int hot = ExpMode() ? 0 : g_btn;  // в компактном режиме подсвечиваем кнопку под курсором (1..3)
             if (ExpMode()) {
                 ExpLay L = CalcExpLay();
                 int fx = mx - g_oxE, fy = GET_Y_LPARAM(l) - g_oyE;
