@@ -2,13 +2,13 @@
 // @id              taskbar-music-widget
 // @name            Taskbar Music Widget
 // @name:ru-RU      Музыкальный виджет на панели задач
-// @description     Now-playing widget for the taskbar with an expandable island: seek, per-app volume, synced lyrics and colors from the album art
-// @description:ru-RU Виджет «сейчас играет» на панели задач с раскрывающимся островом: перемотка, громкость приложения, текст песни и цвета из обложки
-// @version         1.14.0
+// @description     Now-playing widget for the taskbar with an expandable island and a built-in Yandex Music player (search, playlists, My Wave): seek, volume, synced lyrics and colors from the album art
+// @description:ru-RU Виджет «сейчас играет» на панели задач с раскрывающимся островом и встроенным плеером Яндекс Музыки (поиск, плейлисты, «Моя волна»): перемотка, громкость, текст песни и цвета из обложки
+// @version         1.22.0
 // @author          str1nks
 // @github          https://github.com/str1nks/taskbar-music-widget
 // @include         explorer.exe
-// @compilerOptions -lgdi32 -lshell32 -lole32 -loleaut32 -lruntimeobject -lwinhttp
+// @compilerOptions -lgdi32 -lshell32 -lole32 -loleaut32 -lruntimeobject -lwinhttp -ladvapi32
 // ==/WindhawkMod==
 
 // ==WindhawkModReadme==
@@ -36,6 +36,18 @@ player on right click.
 - Spring-like expand animation, staggered content reveal, cover cross-fade, hover and press effects.
 - Collapses instantly, after a delay, or never when the cursor leaves.
 
+## Built-in Yandex Music player
+
+Set **Operating mode** to *Built-in player* and fill in **Yandex Music token**: the widget stops following the system media session and plays music itself (audio streams straight from Yandex, no app and no files on disk):
+
+- Play / pause, previous / next, seeking, volume and mute, "like" heart next to the title (outline when the track is not liked, filled when it is).
+- **Library** button (left of the transport buttons): search field (tracks and artists; an artist opens a profile with their tracks), **My Wave** button, your playlists (including "Liked"), click a track to play it, "Play all" inside a playlist.
+- My Wave sends the same feedback to Yandex as the app does (started / finished / skipped).
+- A badge above the title (and in the compact widget) tells where the track is playing from: "My Wave", "Wave by track", "Playlist: …", "Album: …", "Artist: …", "Search: …" or "Liked". The My Wave button in the library is highlighted while the wave plays.
+- Right click a track (in the library or the current track in the player) for a menu: **Wave by track**, **Open album**, and the artist profiles. Right click elsewhere still expands/collapses the player.
+- In this mode a left click on the compact widget expands it instead of opening the target app.
+- With *Player app* mode (or without a token) the mod works as before: it shows and controls whatever plays in the system, and a left click opens/hides the app.
+
 ## Setup
 
 1. Set **Path to the app exe** (used to open/hide the app and to find its audio session for the volume slider).
@@ -46,6 +58,7 @@ player on right click.
 
 | Setting | Description |
 | --- | --- |
+| Operating mode | *Player app*: the widget only shows/controls the desktop app's player, LMB opens/hides the app. *Built-in player*: the widget is the music source (needs the Yandex Music token), LMB expands it. Without a token the built-in mode behaves like *Player app* |
 | Path to the app exe | App to open/hide on click; also used to match its audio session for volume control |
 | Music source filter | Part of the media session's AppUserModelId (case-insensitive); empty = current system session |
 | Alignment, horizontal offset | Where the widget sits on the taskbar |
@@ -57,6 +70,7 @@ player on right click.
 | Volume wheel step (%) | Volume change per wheel notch over the expanded player (1-50) |
 | Lyrics sync offset (ms) | Shift lyrics earlier/later if they drift |
 | Show the "i" button | Show or hide the source-check button in the corner of the lyrics panel (on by default) |
+| Yandex Music token | OAuth token of your account. Required for the *Built-in player* mode (search, playlists, My Wave). Empty = follow the system media session |
 | Genius API token | Optional. Enables Genius as a fallback lyrics source. Create an API client at https://genius.com/api-clients and paste its Client Access Token |
 
 ## Notes
@@ -75,6 +89,12 @@ player on right click.
 
 // ==WindhawkModSettings==
 /*
+- playerMode: own
+  $name: Режим работы
+  $description: 'Как виджет получает музыку и что делает клик. «Плеер приложения»: виджет только показывает и управляет плеером приложения на ПК (см. Путь к exe и Фильтр источника), клик ЛКМ открывает/прячет это приложение. «Встроенный плеер»: виджет сам источник музыки (нужен Токен Яндекс Музыки), клик ЛКМ по виджету разворачивает его, приложение не открывается. Без токена «Встроенный плеер» работает как «Плеер приложения»'
+  $options:
+  - app: Плеер приложения (виджет только управляет приложением на ПК)
+  - own: Встроенный плеер (виджет — источник музыки, ЛКМ разворачивает)
 - exePath: '%LOCALAPPDATA%\Programs\YandexMusic\Яндекс Музыка.exe'
   $name: Путь к exe приложения
   $description: Что запускать/сворачивать по клику (переменные окружения поддерживаются)
@@ -119,6 +139,9 @@ player on right click.
 - geniusToken: ""
   $name: Genius API токен
   $description: 'Запасной источник текста, если в LRCLIB его нет. Токен: genius.com/api-clients → New API Client → Generate Access Token (Client Access Token). Пусто — Genius не используется'
+- ymToken: ""
+  $name: Токен Яндекс Музыки
+  $description: 'OAuth-токен аккаунта. Нужен для режима «Встроенный плеер»: виджет играет музыку сам (поиск, плейлисты, «Моя волна», лайки), без приложения. Пусто — виджет показывает то, что играет в системе'
 - volumeStep: 5
   $name: Шаг громкости колесом мыши (%)
   $description: На сколько процентов меняется громкость за один щелчок колеса над развёрнутым плеером (1–50)
@@ -136,6 +159,7 @@ player on right click.
 #include <mmdeviceapi.h>
 #include <audiopolicy.h>
 #include <winhttp.h>
+#include <wincrypt.h>
 #undef GetCurrentTime
 
 #include <string>
@@ -144,12 +168,17 @@ player on right click.
 #include <cmath>
 #include <chrono>
 #include <ctime>
+#include <deque>
+#include <map>
 
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.Media.Control.h>
 #include <winrt/Windows.Storage.Streams.h>
 #include <winrt/Windows.Graphics.Imaging.h>
+#include <winrt/Windows.Media.h>
+#include <winrt/Windows.Media.Core.h>
+#include <winrt/Windows.Media.Playback.h>
 
 using namespace winrt::Windows::Media::Control;
 
@@ -168,7 +197,9 @@ struct Settings {
     int bgOpacity = 85;     // непрозрачность фона острова, %
     int lyricsOffsetMs = 0; // сдвиг синхронизации текста, мс
     std::string geniusToken; // токен Genius API (пусто — Genius выключен)
+    std::string ymToken;     // OAuth-токен Яндекс Музыки (пусто — берём музыку из системной медиа-сессии)
     bool showInfoBtn = true; // показывать кнопку «i» в панели текста
+    bool ownSource = true;   // режим работы: false - плеер приложения, true - встроенный плеер (источник музыки)
     BYTE r = 255, g = 255, b = 255;
 } g_set;
 
@@ -184,6 +215,10 @@ static void LoadSettings() {
     wchar_t buf[MAX_PATH * 2];
     ExpandEnvironmentStringsW(s, buf, ARRAYSIZE(buf));
     g_set.exePath = buf;
+    Wh_FreeStringSetting(s);
+
+    s = Wh_GetStringSetting(L"playerMode");
+    g_set.ownSource = ToLower(s) != L"app";
     Wh_FreeStringSetting(s);
 
     s = Wh_GetStringSetting(L"appFilter");
@@ -208,6 +243,11 @@ static void LoadSettings() {
     g_set.geniusToken.clear();
     for (PCWSTR p = s; p && *p; p++)
         if (*p > 32 && *p < 127) g_set.geniusToken += (char)*p;  // токен — ASCII, пробелы по краям отбрасываем
+    Wh_FreeStringSetting(s);
+    s = Wh_GetStringSetting(L"ymToken");
+    g_set.ymToken.clear();
+    for (PCWSTR p = s; p && *p; p++)
+        if (*p > 32 && *p < 127) g_set.ymToken += (char)*p;
     Wh_FreeStringSetting(s);
     s = Wh_GetStringSetting(L"collapseMode");
     std::wstring cm = ToLower(s);
@@ -244,8 +284,9 @@ static double g_dragFrac = 0.0;
 static double g_stageT = 0.0;    // поэтапное появление содержимого развёрнутого плеера 0..1
 static double g_playT = 0.0;     // 0 — пауза, 1 — играет (значок play/pause, размер обложки)
 static double g_textT = 1.0;     // появление текста при смене трека
-static double g_hotT[9] = {};    // наведение: 1 назад, 2 play, 3 вперёд, 4 значок громкости, 5 шкала, 6 громкость, 7 текст песни, 8 проверка источников
-static double g_pressT[6] = {};  // нажатие кнопок 1..5
+static double g_hotT[20] = {};   // 15 — имя исполнителя, 16 — настройки волны, 17 — встряхнуть; наведение: 1 назад, 2 play, 3 вперёд, 4 значок громкости, 5 шкала, 6 громкость, 7 текст песни, 8 проверка источников,
+                                 // 9 библиотека, 10 «нравится», 11 поле поиска, 12 «Моя волна», 13 и 14 вкладки библиотеки
+static double g_pressT[8] = {};  // нажатие кнопок 1..7 (6 — библиотека, 7 — «нравится»)
 static int g_hot = 0, g_pressed = 0;
 static std::vector<DWORD> g_coverOld;  // предыдущая обложка для кросс-фейда
 static int g_coverOldPx = 0;
@@ -288,10 +329,11 @@ static long long g_startTicks = 0;    // начало шкалы (обычно 0
 static long long g_posBase = 0;       // позиция (от начала) на момент g_posBaseTick
 static ULONGLONG g_posBaseTick = 0;
 static ULONGLONG g_seekHold = 0;      // до этого момента не принимаем позицию от приложения (после перемотки)
+static bool g_posFreeze = false;      // свой плеер: трек открывается/буферизуется — шкала стоит
 
 static long long CurPos() {
     long long p = g_posBase;
-    if (g_playing) p += (long long)(GetTickCount64() - g_posBaseTick) * 10000LL;
+    if (g_playing && !g_posFreeze) p += (long long)(GetTickCount64() - g_posBaseTick) * 10000LL;
     if (g_durTicks > 0) p = std::min(p, g_durTicks);
     return std::max(0LL, p);
 }
@@ -323,6 +365,20 @@ static int SD(int v) { return (int)(v * g_scale + 0.5); }
 static int CellW() { return S(36); }
 
 static void StartAnim(HWND h);  // определена ниже
+
+// встроенный плеер Яндекс Музыки: включён режим «Встроенный плеер» и указан токен;
+// иначе — системная медиа-сессия (плеер приложения на ПК)
+static bool OwnMode() { return g_set.ownSource && !g_set.ymToken.empty(); }
+static void OwnPoll();
+static void OwnToggle();
+static void OwnNext();
+static void OwnPrev();
+static void OwnSeek(double frac);
+static void OwnApplyVolume();
+static void OwnSaveVolume();
+static void CloseSearchPopup();
+static bool g_menuOpen = false;  // открыто контекстное меню трека (курсор «уходит» с виджета, но сворачивать нельзя)
+static void OnLeave(HWND h);     // определена ниже
 
 // ---------------------------------------------------------------- палитра по обложке
 struct Rgb {
@@ -485,12 +541,9 @@ static int CoverSize() {
 }
 
 // true — обложка загружена и заменена; при неудаче старая остаётся нетронутой
-static bool LoadCover(GlobalSystemMediaTransportControlsSessionMediaProperties const& props, int size) {
+static bool LoadCoverStream(winrt::Windows::Storage::Streams::IRandomAccessStream const& stream, int size) {
     namespace Img = winrt::Windows::Graphics::Imaging;
     try {
-        auto ref = props.Thumbnail();
-        if (!ref) return false;
-        auto stream = ref.OpenReadAsync().get();
         auto decoder = Img::BitmapDecoder::CreateAsync(stream).get();
         Img::BitmapTransform tr;
         tr.ScaledWidth(size);
@@ -511,6 +564,17 @@ static bool LoadCover(GlobalSystemMediaTransportControlsSessionMediaProperties c
         g_palTgt = PaletteFromCover();
         if (g_hwnd) StartAnim(g_hwnd);  // плавная смена цветов
         return true;
+    } catch (...) {
+        return false;
+    }
+}
+
+static bool LoadCover(GlobalSystemMediaTransportControlsSessionMediaProperties const& props, int size) {
+    try {
+        auto ref = props.Thumbnail();
+        if (!ref) return false;
+        auto stream = ref.OpenReadAsync().get();
+        return LoadCoverStream(stream, size);
     } catch (...) {
         return false;
     }
@@ -578,6 +642,10 @@ static void EnsureManager() {
 }
 
 static void Poll() {
+    if (OwnMode()) {  // свой плеер: состояние ведёт OwnPoll
+        OwnPoll();
+        return;
+    }
     try {
         EnsureManager();
         auto s = FindSession();
@@ -675,6 +743,12 @@ static void Poll() {
 }
 
 static void DoMediaCommand(int btn) {
+    if (OwnMode()) {
+        if (btn == 1) OwnPrev();
+        else if (btn == 2) OwnToggle();
+        else if (btn == 3) OwnNext();
+        return;
+    }
     try {
         auto s = FindSession();
         if (!s) return;
@@ -687,6 +761,10 @@ static void DoMediaCommand(int btn) {
 
 // перемотка: frac 0..1 от длительности трека
 static void DoSeek(double frac) {
+    if (OwnMode()) {
+        OwnSeek(frac);
+        return;
+    }
     try {
         auto s = FindSession();
         if (!s || g_durTicks <= 0) return;
@@ -779,6 +857,11 @@ static bool ForEachTargetVolume(F&& fn) {
 
 // записать g_vol/g_muted в сессии приложения (force=false — не чаще раза в 30 мс)
 static void ApplyVolume(bool force) {
+    if (OwnMode()) {  // свой плеер: громкость задаём прямо MediaPlayer
+        OwnApplyVolume();
+        if (force) OwnSaveVolume();
+        return;
+    }
     ULONGLONG now = GetTickCount64();
     if (!force && now - g_volApplyTick < 30) return;
     g_volApplyTick = now;
@@ -793,7 +876,7 @@ static void ApplyVolume(bool force) {
 
 // прочитать актуальную громкость приложения (когда не тянем ползунок)
 static void PollVolume() {
-    if (g_drag == 2) return;
+    if (g_drag == 2 || OwnMode()) return;
     float mx = -1.f;
     bool mu = false;
     bool any = ForEachTargetVolume([&](ISimpleAudioVolume* v) {
@@ -1595,6 +1678,1991 @@ static std::string OvhLyrics(const std::wstring& artist, const std::wstring& tit
     return std::string();
 }
 
+// ---------------------------------------------------------------- встроенный плеер Яндекс Музыки
+// Всё сетевое (API Яндекс Музыки) выполняется в фоновых потоках, результат приходит в окно сообщением WM_APP+6.
+// Звук играет системный MediaPlayer (Windows.Media.Playback): без внешних программ и без файлов на диске.
+namespace Pb = winrt::Windows::Media::Playback;
+namespace MCore = winrt::Windows::Media::Core;
+
+struct YmTrack {
+    std::string id, albumId, cover;  // cover — coverUri без схемы, с «%%» вместо размера
+    std::wstring title, artists, albumTitle;
+    std::vector<std::pair<std::string, std::wstring>> artistList;  // исполнители: id и имя (для перехода в профиль)
+    long long durMs = 0;
+    bool available = true;
+};
+struct YmPlaylist {
+    std::string kind;  // «liked» — «Мне нравится»
+    std::wstring title;
+    int count = 0;
+    std::string cover;  // uri обложки без схемы, с «%%» вместо размера (пусто — обложки нет)
+    std::string uid;    // владелец, если плейлист не свой (например «Плейлист дня»); пусто — свой
+};
+struct YmArtist {
+    std::string id;
+    std::wstring name;
+    std::string cover;
+};
+
+static std::string YmFullId(const YmTrack& t) {
+    return t.albumId.empty() ? t.id : t.id + ":" + t.albumId;
+}
+
+// ---- минимальный разбор JSON (ответы API вложенные, поэтому искать подстроки уже недостаточно)
+struct Jv {
+    enum Type { Null, Bool, Num, Str, Arr, Obj } t = Null;
+    bool b = false;
+    double n = 0;
+    std::string s;
+    std::vector<Jv> a;
+    std::vector<std::string> keys;
+    std::vector<Jv> vals;
+
+    const Jv& operator[](const char* k) const {
+        static const Jv none{};
+        for (size_t i = 0; i < keys.size(); i++)
+            if (keys[i] == k) return vals[i];
+        return none;
+    }
+    const Jv& at(size_t i) const {
+        static const Jv none{};
+        return i < a.size() ? a[i] : none;
+    }
+    size_t size() const { return a.size(); }
+    std::string str() const {  // строка; число — как целое
+        if (t == Str) return s;
+        if (t == Num) {
+            char buf[40];
+            snprintf(buf, sizeof(buf), "%.0f", n);
+            return buf;
+        }
+        return std::string();
+    }
+    long long num() const { return t == Num ? (long long)n : 0; }
+};
+
+struct JsonP {
+    const std::string& s;
+    size_t i = 0;
+    int depth = 0;
+    explicit JsonP(const std::string& str) : s(str) {}
+    void ws() {
+        while (i < s.size() && (s[i] == ' ' || s[i] == '\t' || s[i] == '\n' || s[i] == '\r')) i++;
+    }
+    bool lit(const char* w) {
+        size_t n = strlen(w);
+        if (s.compare(i, n, w) == 0) {
+            i += n;
+            return true;
+        }
+        return false;
+    }
+    bool str(std::string& o) {
+        if (i >= s.size() || s[i] != '"') return false;
+        i++;
+        while (i < s.size() && s[i] != '"') {
+            char c = s[i];
+            if (c == '\\' && i + 1 < s.size()) {
+                char e = s[++i];
+                switch (e) {
+                    case 'n': o += '\n'; break;
+                    case 't': o += '\t'; break;
+                    case 'r': o += '\r'; break;
+                    case 'b': o += '\b'; break;
+                    case 'f': o += '\f'; break;
+                    case 'u': {
+                        unsigned cp = 0;
+                        if (!Hex4(s, i + 1, cp)) return false;
+                        i += 4;
+                        if (cp >= 0xD800 && cp < 0xDC00 && i + 6 < s.size() && s[i + 1] == '\\' && s[i + 2] == 'u') {
+                            unsigned lo = 0;
+                            if (Hex4(s, i + 3, lo) && lo >= 0xDC00 && lo < 0xE000) {
+                                cp = 0x10000 + ((cp - 0xD800) << 10) + (lo - 0xDC00);
+                                i += 6;
+                            }
+                        }
+                        AppendUtf8(o, cp);
+                        break;
+                    }
+                    default: o += e; break;
+                }
+            } else {
+                o += c;
+            }
+            i++;
+        }
+        if (i >= s.size()) return false;
+        i++;  // закрывающая кавычка
+        return true;
+    }
+    bool val(Jv& v) {
+        ws();
+        if (i >= s.size() || depth > 64) return false;
+        const char c = s[i];
+        if (c == '{') {
+            v.t = Jv::Obj;
+            i++;
+            depth++;
+            ws();
+            if (i < s.size() && s[i] == '}') {
+                i++;
+                depth--;
+                return true;
+            }
+            for (;;) {
+                ws();
+                std::string k;
+                if (!str(k)) return false;
+                ws();
+                if (i >= s.size() || s[i] != ':') return false;
+                i++;
+                Jv x;
+                if (!val(x)) return false;
+                v.keys.push_back(std::move(k));
+                v.vals.push_back(std::move(x));
+                ws();
+                if (i < s.size() && s[i] == ',') {
+                    i++;
+                    continue;
+                }
+                if (i < s.size() && s[i] == '}') {
+                    i++;
+                    break;
+                }
+                return false;
+            }
+            depth--;
+            return true;
+        }
+        if (c == '[') {
+            v.t = Jv::Arr;
+            i++;
+            depth++;
+            ws();
+            if (i < s.size() && s[i] == ']') {
+                i++;
+                depth--;
+                return true;
+            }
+            for (;;) {
+                Jv x;
+                if (!val(x)) return false;
+                v.a.push_back(std::move(x));
+                ws();
+                if (i < s.size() && s[i] == ',') {
+                    i++;
+                    continue;
+                }
+                if (i < s.size() && s[i] == ']') {
+                    i++;
+                    break;
+                }
+                return false;
+            }
+            depth--;
+            return true;
+        }
+        if (c == '"') {
+            v.t = Jv::Str;
+            return str(v.s);
+        }
+        if (lit("true")) {
+            v.t = Jv::Bool;
+            v.b = true;
+            return true;
+        }
+        if (lit("false")) {
+            v.t = Jv::Bool;
+            v.b = false;
+            return true;
+        }
+        if (lit("null")) return true;
+        char* end = nullptr;
+        double d = strtod(s.c_str() + i, &end);
+        if (end == s.c_str() + i) return false;
+        v.t = Jv::Num;
+        v.n = d;
+        i = (size_t)(end - s.c_str());
+        return true;
+    }
+};
+
+static Jv JsonParse(const std::string& js) {
+    Jv v;
+    JsonP p(js);
+    if (!p.val(v)) return Jv();
+    return v;
+}
+
+// ---- MD5 (подпись прямой ссылки) через CryptoAPI
+static std::string Md5Hex(const std::string& data) {
+    std::string out;
+    HCRYPTPROV prov = 0;
+    HCRYPTHASH hash = 0;
+    if (CryptAcquireContextW(&prov, nullptr, nullptr, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT)) {
+        if (CryptCreateHash(prov, CALG_MD5, 0, 0, &hash)) {
+            if (CryptHashData(hash, (const BYTE*)data.data(), (DWORD)data.size(), 0)) {
+                BYTE d[16];
+                DWORD n = sizeof(d);
+                if (CryptGetHashParam(hash, HP_HASHVAL, d, &n, 0) && n == 16) {
+                    static const char* hx = "0123456789abcdef";
+                    for (int i = 0; i < 16; i++) {
+                        out += hx[d[i] >> 4];
+                        out += hx[d[i] & 15];
+                    }
+                }
+            }
+            CryptDestroyHash(hash);
+        }
+        CryptReleaseContext(prov, 0);
+    }
+    return out;
+}
+
+// ---- HTTP к api.music.yandex.net (тело возвращается при любом коде — в нём бывает описание ошибки)
+static const wchar_t* kYmHost = L"api.music.yandex.net";
+static const wchar_t* kYmClientHdr = L"X-Yandex-Music-Client: YandexMusicAndroid/24023621";
+
+static std::string YmRequest(const std::string& token, bool post, const std::wstring& path, const std::string& body,
+                             const wchar_t* ctype, HttpInfo* info) {
+    std::string out;
+    HttpInfo local;
+    HttpInfo& hi = info ? *info : local;
+    hi = HttpInfo();
+    HINTERNET ses = WinHttpOpen(L"Yandex-Music-API", 4 /*AUTOMATIC_PROXY*/, nullptr, nullptr, 0);
+    if (!ses) {
+        hi.err = GetLastError();
+        return out;
+    }
+    WinHttpSetTimeouts(ses, 5000, 5000, 8000, 12000);
+    HINTERNET con = WinHttpConnect(ses, kYmHost, INTERNET_DEFAULT_HTTPS_PORT, 0);
+    HINTERNET req = con ? WinHttpOpenRequest(con, post ? L"POST" : L"GET", path.c_str(), nullptr, WINHTTP_NO_REFERER,
+                                             WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE)
+                        : nullptr;
+    std::wstring hdr = std::wstring(kYmClientHdr) + L"\r\nAccept: application/json\r\nAccept-Language: ru\r\n";
+    if (!token.empty()) hdr += L"Authorization: OAuth " + Wide(token) + L"\r\n";
+    if (post && ctype) hdr += std::wstring(L"Content-Type: ") + ctype + L"\r\n";
+    const DWORD blen = post ? (DWORD)body.size() : 0;
+    bool ok = req && WinHttpSendRequest(req, hdr.c_str(), (DWORD)-1L,
+                                        blen ? (LPVOID)body.data() : WINHTTP_NO_REQUEST_DATA, blen, blen, 0) &&
+              WinHttpReceiveResponse(req, nullptr);
+    if (!ok) {
+        hi.err = GetLastError();
+    } else {
+        DWORD status = 0, sz = sizeof(status);
+        WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, WINHTTP_HEADER_NAME_BY_INDEX,
+                            &status, &sz, WINHTTP_NO_HEADER_INDEX);
+        hi.status = (int)status;
+        DWORD avail = 0;
+        while (WinHttpQueryDataAvailable(req, &avail) && avail) {
+            std::string buf(avail, '\0');
+            DWORD rd = 0;
+            if (!WinHttpReadData(req, &buf[0], avail, &rd) || !rd) break;
+            out.append(buf, 0, rd);
+            if (out.size() > 8 * 1024 * 1024) break;
+        }
+    }
+    if (req) WinHttpCloseHandle(req);
+    if (con) WinHttpCloseHandle(con);
+    WinHttpCloseHandle(ses);
+    return out;
+}
+
+static std::string UrlEncA(const std::string& s) {
+    return Utf8(UrlEnc(s));
+}
+
+static std::wstring YmErr(const HttpInfo& hi, const Jv& root) {
+    if (!hi.status) return NetErrText(hi.err);
+    if (hi.status == 401 || hi.status == 403) return L"токен не принят (HTTP " + std::to_wstring(hi.status) + L")";
+    std::wstring m = L"HTTP " + std::to_wstring(hi.status);
+    std::string e = root["error"]["message"].str();
+    if (e.empty()) e = root["error"]["name"].str();
+    if (!e.empty()) m += L": " + Wide(e);
+    return m;
+}
+
+// ---- разбор объектов API
+static YmTrack YmParseTrack(const Jv& t) {
+    YmTrack o;
+    o.id = t["id"].str();
+    if (o.id.empty()) o.id = t["realId"].str();
+    size_t c = o.id.find(':');  // бывает «трек:альбом»
+    if (c != std::string::npos) {
+        o.albumId = o.id.substr(c + 1);
+        o.id.resize(c);
+    }
+    if (o.albumId.empty()) o.albumId = t["albums"].at(0)["id"].str();
+    o.albumTitle = Wide(t["albums"].at(0)["title"].str());
+    o.title = Wide(t["title"].str());
+    std::string ar;
+    const Jv& A = t["artists"];
+    for (size_t i = 0; i < A.size(); i++) {
+        std::string n = A.at(i)["name"].str();
+        if (n.empty()) continue;
+        if (!ar.empty()) ar += ", ";
+        ar += n;
+        o.artistList.push_back({A.at(i)["id"].str(), Wide(n)});
+    }
+    o.artists = Wide(ar);
+    o.durMs = t["durationMs"].num();
+    o.cover = t["coverUri"].str();
+    if (o.cover.empty()) o.cover = t["ogImage"].str();
+    const Jv& av = t["available"];
+    o.available = !(av.t == Jv::Bool && !av.b);
+    return o;
+}
+
+// ---- вызовы API (блокирующие — только из фоновых потоков)
+static const size_t kMaxPlTracks = 300;  // сколько треков плейлиста берём (чтобы «Мне нравится» на тысячи треков не грузился минутами)
+
+static std::string YmUserId(const std::string& token, std::wstring* err) {
+    HttpInfo hi;
+    std::string js = YmRequest(token, false, L"/account/status", "", nullptr, &hi);
+    Jv r = JsonParse(js);
+    std::string uid = r["result"]["account"]["uid"].str();
+    if (uid.empty() && err) *err = YmErr(hi, r);
+    return uid;
+}
+
+static bool YmSearch(const std::string& token, const std::string& q, std::vector<YmTrack>& out, std::wstring& err) {
+    HttpInfo hi;
+    std::string js = YmRequest(
+        token, false, L"/search?text=" + UrlEnc(q) + L"&nocorrect=false&type=track&page=0&playlist-in-best=true", "",
+        nullptr, &hi);
+    Jv r = JsonParse(js);
+    const Jv& res = r["result"]["tracks"]["results"];
+    if (res.t != Jv::Arr) {
+        if (hi.status == 200) return true;  // ничего не нашлось
+        err = YmErr(hi, r);
+        return false;
+    }
+    for (size_t i = 0; i < res.size(); i++) {
+        YmTrack t = YmParseTrack(res.at(i));
+        if (!t.id.empty() && t.available) out.push_back(t);
+    }
+    return true;
+}
+
+// поиск исполнителей (до 5 первых)
+static bool YmSearchArtists(const std::string& token, const std::string& q, std::vector<YmArtist>& out) {
+    HttpInfo hi;
+    std::string js = YmRequest(token, false, L"/search?text=" + UrlEnc(q) + L"&nocorrect=false&type=artist&page=0", "",
+                               nullptr, &hi);
+    Jv r = JsonParse(js);
+    const Jv& res = r["result"]["artists"]["results"];
+    if (res.t != Jv::Arr) return false;
+    for (size_t i = 0; i < res.size() && out.size() < 5; i++) {
+        const Jv& a = res.at(i);
+        YmArtist o;
+        o.id = a["id"].str();
+        o.name = Wide(a["name"].str());
+        o.cover = a["cover"]["uri"].str();
+        if (o.cover.empty()) o.cover = a["ogImage"].str();
+        if (!o.id.empty() && !o.name.empty()) out.push_back(o);
+    }
+    return true;
+}
+
+// треки исполнителя (профиль)
+static bool YmArtistTracks(const std::string& token, const std::string& id, std::vector<YmTrack>& out,
+                           std::wstring& err) {
+    HttpInfo hi;
+    std::string js = YmRequest(token, false, L"/artists/" + Wide(id) + L"/tracks?page=0&page-size=100", "", nullptr, &hi);
+    Jv r = JsonParse(js);
+    const Jv& res = r["result"]["tracks"];
+    if (res.t != Jv::Arr) {
+        err = YmErr(hi, r);
+        return false;
+    }
+    for (size_t i = 0; i < res.size(); i++) {
+        YmTrack t = YmParseTrack(res.at(i));
+        if (!t.id.empty() && t.available) out.push_back(t);
+    }
+    return true;
+}
+
+// треки альбома (все тома подряд)
+static bool YmAlbumTracks(const std::string& token, const std::string& id, std::vector<YmTrack>& out,
+                          std::wstring& err) {
+    HttpInfo hi;
+    std::string js = YmRequest(token, false, L"/albums/" + Wide(id) + L"/with-tracks", "", nullptr, &hi);
+    Jv r = JsonParse(js);
+    const Jv& vols = r["result"]["volumes"];
+    if (vols.t != Jv::Arr) {
+        err = YmErr(hi, r);
+        return false;
+    }
+    const std::wstring at = Wide(r["result"]["title"].str());
+    for (size_t v = 0; v < vols.size(); v++) {
+        const Jv& vt = vols.at(v);
+        for (size_t i = 0; i < vt.size(); i++) {
+            YmTrack t = YmParseTrack(vt.at(i));
+            if (t.id.empty() || !t.available) continue;
+            if (t.albumId.empty()) t.albumId = id;
+            if (t.albumTitle.empty()) t.albumTitle = at;
+            out.push_back(t);
+        }
+    }
+    return true;
+}
+
+static std::string YmPlaylistCoverUri(const Jv& p) {
+    const Jv& cv = p["cover"];
+    std::string c = cv["uri"].str();
+    if (c.empty()) {
+        const Jv& mo = cv["itemsUri"];
+        if (mo.t == Jv::Arr && mo.size() > 0) c = mo.at(0).str();
+    }
+    if (c.empty()) c = p["ogImage"].str();
+    return c;
+}
+
+// «Плейлист дня»: персональная подборка Яндекса, лежит в блоке главной страницы (запасной путь — лента)
+static bool YmDailyPlaylist(const std::string& token, YmPlaylist& out) {
+    auto fill = [&](const Jv& p) -> bool {
+        std::string uid = p["uid"].str();
+        if (uid.empty()) uid = p["owner"]["uid"].str();
+        const std::string kind = p["kind"].str();
+        if (uid.empty() || kind.empty()) return false;
+        out = YmPlaylist();
+        out.kind = kind;
+        out.uid = uid;
+        out.title = L"Плейлист дня";
+        out.count = (int)p["trackCount"].num();
+        out.cover = YmPlaylistCoverUri(p);
+        return true;
+    };
+    {
+        HttpInfo hi;
+        std::string js = YmRequest(token, false, L"/landing3?blocks=personalplaylists", "", nullptr, &hi);
+        Jv r = JsonParse(js);
+        const Jv& blocks = r["result"]["blocks"];
+        for (size_t i = 0; i < blocks.size(); i++) {
+            const Jv& ents = blocks.at(i)["entities"];
+            for (size_t k = 0; k < ents.size(); k++) {
+                const Jv& p = ents.at(k)["data"]["data"];
+                if (p["generatedPlaylistType"].str() == "playlistOfTheDay" && fill(p)) return true;
+            }
+        }
+    }
+    {
+        HttpInfo hi;
+        std::string js = YmRequest(token, false, L"/feed", "", nullptr, &hi);
+        Jv r = JsonParse(js);
+        const Jv& gp = r["result"]["generatedPlaylists"];
+        for (size_t i = 0; i < gp.size(); i++) {
+            const Jv& g = gp.at(i);
+            if (g["type"].str() == "playlistOfTheDay" && fill(g["data"])) return true;
+        }
+    }
+    return false;
+}
+
+static bool YmPlaylists(const std::string& token, const std::string& uid, std::vector<YmPlaylist>& out,
+                        std::wstring& err) {
+    HttpInfo hi;
+    std::string js = YmRequest(token, false, L"/users/" + Wide(uid) + L"/playlists/list", "", nullptr, &hi);
+    Jv r = JsonParse(js);
+    const Jv& res = r["result"];
+    if (res.t != Jv::Arr) {
+        err = YmErr(hi, r);
+        return false;
+    }
+    YmPlaylist liked;
+    liked.kind = "liked";
+    liked.title = L"Мне нравится";
+    out.push_back(liked);
+    for (size_t i = 0; i < res.size(); i++) {
+        const Jv& p = res.at(i);
+        YmPlaylist pl;
+        pl.kind = p["kind"].str();
+        pl.title = Wide(p["title"].str());
+        pl.count = (int)p["trackCount"].num();
+        {   // обложка плейлиста: одиночная картинка, иначе первая из «мозаики», иначе ogImage
+            const Jv& cv = p["cover"];
+            pl.cover = cv["uri"].str();
+            if (pl.cover.empty()) {
+                const Jv& mo = cv["itemsUri"];
+                if (mo.t == Jv::Arr && mo.size() > 0) pl.cover = mo.at(0).str();
+            }
+            if (pl.cover.empty()) pl.cover = p["ogImage"].str();
+        }
+        if (!pl.kind.empty()) out.push_back(pl);
+    }
+    YmPlaylist daily;  // «Плейлист дня» — второй строкой, под «Мне нравится»; если его нет, просто пропускаем
+    if (YmDailyPlaylist(token, daily)) out.insert(out.begin() + (out.empty() ? 0 : 1), daily);
+    return true;
+}
+
+static bool YmPlaylistTracks(const std::string& token, const std::string& uid, const std::string& kind,
+                             std::vector<YmTrack>& out, std::wstring& err) {
+    HttpInfo hi;
+    std::wstring path = kind == "liked" ? L"/users/" + Wide(uid) + L"/likes/tracks"
+                                        : L"/users/" + Wide(uid) + L"/playlists/" + Wide(kind);
+    std::string js = YmRequest(token, false, path, "", nullptr, &hi);
+    Jv r = JsonParse(js);
+    const Jv& items = kind == "liked" ? r["result"]["library"]["tracks"] : r["result"]["tracks"];
+    if (items.t != Jv::Arr) {
+        err = YmErr(hi, r);
+        return false;
+    }
+    const size_t n = std::min(items.size(), kMaxPlTracks);
+    std::vector<YmTrack> full(n);
+    std::vector<char> have(n, 0);
+    std::vector<std::string> need;     // «трек:альбом» для запроса недостающих описаний
+    std::map<std::string, size_t> pos;  // id трека -> позиция в списке
+    for (size_t i = 0; i < n; i++) {
+        const Jv& it = items.at(i);
+        const Jv& tr = it["track"];
+        if (tr.t == Jv::Obj && !tr["title"].str().empty()) {
+            full[i] = YmParseTrack(tr);
+            have[i] = 1;
+        } else {
+            std::string id = it["id"].str(), alb = it["albumId"].str();
+            if (id.empty()) continue;
+            pos[id] = i;
+            need.push_back(alb.empty() ? id : id + ":" + alb);
+        }
+    }
+    for (size_t k = 0; k < need.size(); k += 100) {
+        std::string body = "with-positions=True";
+        for (size_t m = k; m < std::min(need.size(), k + 100); m++) body += "&track-ids=" + UrlEncA(need[m]);
+        HttpInfo h2;
+        std::string js2 = YmRequest(token, true, L"/tracks", body, L"application/x-www-form-urlencoded", &h2);
+        Jv r2 = JsonParse(js2);
+        const Jv& arr = r2["result"];
+        for (size_t m = 0; m < arr.size(); m++) {
+            YmTrack t = YmParseTrack(arr.at(m));
+            auto f = pos.find(t.id);
+            if (f != pos.end()) {
+                full[f->second] = t;
+                have[f->second] = 1;
+            }
+        }
+    }
+    for (size_t i = 0; i < n; i++)
+        if (have[i] && full[i].available && !full[i].id.empty()) out.push_back(full[i]);
+    return true;
+}
+
+// прямая ссылка на MP3 максимального битрейта; вызывать в момент запуска — ссылки быстро протухают
+static bool YmDirectLink(const std::string& token, const std::string& id, std::string& url, std::wstring& err) {
+    HttpInfo hi;
+    std::string js = YmRequest(token, false, L"/tracks/" + Wide(id) + L"/download-info", "", nullptr, &hi);
+    Jv r = JsonParse(js);
+    const Jv& list = r["result"];
+    std::string best;
+    long long bestKbps = -1;
+    for (size_t i = 0; i < list.size(); i++) {
+        const Jv& e = list.at(i);
+        if (e["codec"].str() != "mp3") continue;
+        long long kb = e["bitrateInKbps"].num();
+        if (kb > bestKbps) {
+            bestKbps = kb;
+            best = e["downloadInfoUrl"].str();
+        }
+    }
+    if (best.empty()) {
+        err = list.t == Jv::Arr ? std::wstring(L"для трека нет MP3-потока") : YmErr(hi, r);
+        return false;
+    }
+    std::string u = best;
+    size_t p = u.find("://");
+    if (p != std::string::npos) u = u.substr(p + 3);
+    size_t sl = u.find('/');
+    if (sl == std::string::npos) {
+        err = L"странная ссылка на поток";
+        return false;
+    }
+    const std::wstring host = Wide(u.substr(0, sl));
+    const std::wstring path = Wide(u.substr(sl)) + L"&format=json";
+    HttpInfo h2;
+    std::string js2 = HttpGet(host.c_str(), path, kYmClientHdr, nullptr, &h2);
+    Jv d = JsonParse(js2);
+    const std::string h = d["host"].str(), pth = d["path"].str(), ts = d["ts"].str(), s = d["s"].str();
+    if (h.empty() || pth.size() < 2 || ts.empty() || s.empty()) {
+        err = h2.status ? L"не удалось получить ссылку (HTTP " + std::to_wstring(h2.status) + L")" : NetErrText(h2.err);
+        return false;
+    }
+    const std::string sign = Md5Hex("XGRlBW9FXlekgbPrRHuSiA" + pth.substr(1) + s);
+    if (sign.empty()) {
+        err = L"не удалось посчитать подпись";
+        return false;
+    }
+    url = "https://" + h + "/get-mp3/" + sign + "/" + ts + pth;
+    return true;
+}
+
+static bool YmCover(const std::string& coverUri, std::string& bytes, const char* size = "400x400") {
+    if (coverUri.empty()) return false;
+    std::string u = coverUri;
+    size_t p = u.find("%%");
+    if (p != std::string::npos) u.replace(p, 2, size);
+    size_t sc = u.find("://");
+    if (sc != std::string::npos) u = u.substr(sc + 3);
+    size_t sl = u.find('/');
+    if (sl == std::string::npos) return false;
+    const std::wstring host = Wide(u.substr(0, sl));
+    bytes = HttpGet(host.c_str(), Wide(u.substr(sl)));
+    return !bytes.empty();
+}
+
+static std::string YmNowStamp() {
+    SYSTEMTIME st;
+    GetLocalTime(&st);
+    char ts[64];
+    snprintf(ts, sizeof(ts), "%04d-%02d-%02dT%02d:%02d:%02d.%03d000", (int)st.wYear, (int)st.wMonth, (int)st.wDay,
+             (int)st.wHour, (int)st.wMinute, (int)st.wSecond, (int)st.wMilliseconds);
+    return ts;
+}
+
+static std::string JsonQ(const std::string& s) {
+    std::string o = "\"";
+    for (char c : s) {
+        if ((unsigned char)c < 0x20) continue;
+        if (c == '"' || c == '\\') o += '\\';
+        o += c;
+    }
+    o += '"';
+    return o;
+}
+
+// настройки «Моей волны»: 0 — занятие, 1 — характер, 2 — настроение, 3 — язык; значения по умолчанию = «любое»
+static const char* const kWaveDefault[4] = {"any", "default", "all", "any"};
+
+// ответ rotor/session/new и rotor/session/{id}/tracks: радио-сессия, пачка (batchId) и треки
+static bool YmWaveSessionResult(const std::string& js, const HttpInfo& hi, std::vector<YmTrack>& out,
+                                std::string& batch, std::string& session, std::wstring& err) {
+    Jv r = JsonParse(js);
+    const Jv& res = r["result"];
+    const Jv& seq = res["sequence"];
+    if (hi.status != 200 || seq.t != Jv::Arr) {
+        err = YmErr(hi, r);
+        return false;
+    }
+    const std::string sid = res["radioSessionId"].str();
+    if (!sid.empty()) session = sid;
+    batch = res["batchId"].str();
+    const size_t before = out.size();
+    for (size_t i = 0; i < seq.size(); i++) {
+        YmTrack t = YmParseTrack(seq.at(i)["track"]);
+        if (!t.id.empty()) out.push_back(t);
+    }
+    if (out.size() == before) {
+        err = L"пустой список треков";
+        return false;
+    }
+    return true;
+}
+
+// станция: «Моя волна» или волна по треку (seed вида «track:ID»)
+static std::string WaveStation(const std::string& seed) {
+    return seed.empty() ? std::string("user:onyourwave") : seed;
+}
+
+// старый интерфейс станций (Яндекс его отключает) — оставлен как запасной путь
+static bool YmWaveTracksLegacy(const std::string& token, const std::string& lastId, std::vector<YmTrack>& out,
+                               std::string& batch, std::wstring& err, const std::string& seed = std::string()) {
+    HttpInfo hi;
+    std::wstring path = L"/rotor/station/" + Wide(WaveStation(seed)) + L"/tracks?settings2=true";  // как в yandex-music: settings2=True
+    if (!lastId.empty()) path += L"&queue=" + UrlEnc(lastId);
+    std::string js = YmRequest(token, false, path, "", nullptr, &hi);
+    Jv r = JsonParse(js);
+    const Jv& seq = r["result"]["sequence"];
+    if (seq.t != Jv::Arr) {
+        err = YmErr(hi, r);
+        return false;
+    }
+    batch = r["result"]["batchId"].str();
+    for (size_t i = 0; i < seq.size(); i++) {
+        YmTrack t = YmParseTrack(seq.at(i)["track"]);
+        if (!t.id.empty()) out.push_back(t);
+    }
+    return true;
+}
+
+// обратная связь «Моей волне»: radioStarted / trackStarted / trackFinished / skip
+// session пусто — старый интерфейс станций, иначе радио-сессия
+static void YmWaveFeedback(const std::string& token, const std::string& session, const std::string& type,
+                           const std::string& fullId, double secs, const std::string& batch, bool radioStarted,
+                           const std::string& seed = std::string()) {
+    std::string ev = "{\"type\":" + JsonQ(type) + ",\"timestamp\":" + JsonQ(YmNowStamp());
+    if (session.empty() && radioStarted) {
+        ev += ",\"from\":\"user-onyourwave\"";
+    } else if (!radioStarted) {
+        ev += ",\"trackId\":" + JsonQ(fullId);
+        if (secs >= 0) {
+            char sb[32];
+            snprintf(sb, sizeof(sb), "%.2f", secs);
+            ev += std::string(",\"totalPlayedSeconds\":") + sb;
+        }
+    }
+    ev += "}";
+    if (session.empty()) {
+        std::wstring path = L"/rotor/station/" + Wide(WaveStation(seed)) + L"/feedback";
+        if (!batch.empty()) path += L"?batch-id=" + UrlEnc(batch);
+        YmRequest(token, true, path, ev, L"application/json", nullptr);
+    } else {
+        const std::string body = "{\"event\":" + ev + ",\"batchId\":" + JsonQ(batch) + "}";
+        YmRequest(token, true, L"/rotor/session/" + Wide(session) + L"/feedback", body, L"application/json", nullptr);
+    }
+}
+
+static bool YmLikedIds(const std::string& token, const std::string& uid, std::vector<std::string>& ids,
+                       std::wstring& err) {
+    HttpInfo hi;
+    std::string js = YmRequest(token, false, L"/users/" + Wide(uid) + L"/likes/tracks", "", nullptr, &hi);
+    Jv r = JsonParse(js);
+    const Jv& items = r["result"]["library"]["tracks"];
+    if (items.t != Jv::Arr) {
+        err = YmErr(hi, r);
+        return false;
+    }
+    for (size_t i = 0; i < items.size(); i++) {
+        std::string id = items.at(i)["id"].str();
+        if (!id.empty()) ids.push_back(id);
+    }
+    return true;
+}
+
+static bool YmSetLike(const std::string& token, const std::string& uid, const std::string& id, bool add,
+                      std::wstring& err) {
+    HttpInfo hi;
+    std::wstring path = L"/users/" + Wide(uid) + (add ? L"/likes/tracks/add-multiple" : L"/likes/tracks/remove");
+    std::string js = YmRequest(token, true, path, "track-ids=" + UrlEncA(id), L"application/x-www-form-urlencoded", &hi);
+    if (hi.status >= 200 && hi.status < 300) return true;
+    err = YmErr(hi, JsonParse(js));
+    return false;
+}
+
+// ---- фоновые рабочие потоки: очередь заданий, результат уходит в окно (WM_APP+6)
+enum { YJ_SEARCH = 1, YJ_PLAYLISTS, YJ_PL_TRACKS, YJ_PLAY, YJ_WAVE, YJ_FEEDBACK, YJ_LIKE, YJ_LIKED, YJ_COVER, YJ_THUMB, YJ_ART_TRACKS, YJ_ALBUM };
+
+struct YmJob {
+    int kind = 0;
+    long long gen = 0;
+    std::string token, uid, s1, s2;
+    std::string session;   // радио-сессия «Моей волны» (пусто — создать новую)
+    std::string seed;      // пусто — «Моя волна»; «track:ID» — волна по треку
+    std::string wcfg[4];   // настройки волны: занятие, характер, настроение, язык
+    YmTrack track;
+    double secs = -1;
+    bool flag = false;
+};
+struct YmRes {
+    int kind = 0;
+    long long gen = 0;
+    bool ok = false;
+    std::wstring err;
+    std::string uid, url, s1, bytes, session;
+    std::vector<YmTrack> tracks;
+    std::vector<YmPlaylist> pls;
+    std::vector<YmArtist> artists;
+    std::vector<std::string> ids;
+    YmTrack track;
+    double secs = 0;
+};
+
+// «Моя волна»: радио-сессия с сидами настроек (rotor/session/*); если сессии недоступны — старый интерфейс станций.
+// j.s1 — последний сыгранный трек, j.session — текущая сессия, j.wcfg — настройки, j.flag — волна только что запущена
+static bool YmWaveFetch(const YmJob& j, std::vector<YmTrack>& out, std::string& batch, std::string& session,
+                        std::wstring& err) {
+    auto cfg = [&](int k) { return j.wcfg[k].empty() ? std::string(kWaveDefault[k]) : j.wcfg[k]; };
+    session = j.session;
+    HttpInfo hi;
+    if (!session.empty()) {  // продолжаем сессию: просим следующую пачку
+        const std::string body = j.s1.empty() ? std::string("{}") : "{\"queue\":[" + JsonQ(j.s1) + "]}";
+        std::string js = YmRequest(j.token, true, L"/rotor/session/" + Wide(session) + L"/tracks", body,
+                                   L"application/json", &hi);
+        if (YmWaveSessionResult(js, hi, out, batch, session, err)) return true;
+        out.clear();
+        session.clear();  // сессия протухла — создаём заново
+    }
+
+    // новая сессия: занятие — отдельная станция (activity:…), остальные настройки — сиды «settingXxx:значение»
+    std::vector<std::string> st;
+    if (cfg(1) != "default") st.push_back("settingDiversity:" + cfg(1));
+    if (cfg(2) != "all") st.push_back("settingMoodEnergy:" + cfg(2));
+    if (cfg(3) != "any") st.push_back("settingLanguage:" + cfg(3));
+    const std::string head = !j.seed.empty() ? j.seed
+                             : cfg(0) != "any" ? "activity:" + cfg(0) : std::string("user:onyourwave");
+    std::vector<std::vector<std::string>> tries;
+    {
+        std::vector<std::string> a{head};
+        a.insert(a.end(), st.begin(), st.end());
+        tries.push_back(a);
+        if (!st.empty()) tries.push_back(std::vector<std::string>{head});  // сервер не принял настройки — хотя бы станция
+    }
+    for (const auto& seeds : tries) {
+        std::string body = "{\"seeds\":[";
+        for (size_t i = 0; i < seeds.size(); i++) body += (i ? "," : "") + JsonQ(seeds[i]);
+        body += "],\"includeTracksInResponse\":true}";
+        HttpInfo h2;
+        std::string js = YmRequest(j.token, true, L"/rotor/session/new", body, L"application/json", &h2);
+        std::vector<YmTrack> got;
+        std::string b2, s2;
+        std::wstring e2;
+        if (YmWaveSessionResult(js, h2, got, b2, s2, e2) && !s2.empty()) {
+            out = got;
+            batch = b2;
+            session = s2;
+            YmWaveFeedback(j.token, session, "radioStarted", "", -1, batch, true);
+            return true;
+        }
+        err = e2;
+    }
+
+    // запасной путь: станции (настройки передаём через settings2)
+    session.clear();
+    if (cfg(1) != "default" || cfg(2) != "all" || cfg(3) != "any") {
+        const std::string body = "{\"moodEnergy\":" + JsonQ(cfg(2)) + ",\"diversity\":" + JsonQ(cfg(1)) +
+                                 ",\"language\":" + JsonQ(cfg(3)) + ",\"type\":\"rotor\"}";
+        YmRequest(j.token, true, L"/rotor/station/" + Wide(WaveStation(j.seed)) + L"/settings2", body,
+                  L"application/json", nullptr);
+    }
+    if (j.flag) YmWaveFeedback(j.token, "", "radioStarted", "", -1, "", true, j.seed);
+    std::wstring e3;
+    if (YmWaveTracksLegacy(j.token, j.s1, out, batch, e3, j.seed)) return true;
+    if (err.empty()) err = e3;
+    return false;
+}
+
+static CRITICAL_SECTION g_ymCs;
+static bool g_ymCsInit = false;
+static std::deque<YmJob*> g_ymQ;
+static HANDLE g_ymSem = nullptr;
+static HANDLE g_ymThreads[3] = {};
+static volatile bool g_ymStop = false;
+
+static void YmEnqueue(YmJob* j) {
+    if (!g_ymSem || !g_ymCsInit || g_ymStop) {
+        delete j;
+        return;
+    }
+    EnterCriticalSection(&g_ymCs);
+    g_ymQ.push_back(j);
+    LeaveCriticalSection(&g_ymCs);
+    ReleaseSemaphore(g_ymSem, 1, nullptr);
+}
+
+static void YmRunJob(YmJob* j) {
+    YmRes* r = new YmRes();
+    r->kind = j->kind;
+    r->gen = j->gen;
+    r->track = j->track;
+    r->s1 = j->s1;
+    r->secs = j->secs;
+    try {
+        std::string uid = j->uid;
+        auto needUid = [&]() -> bool {
+            if (uid.empty()) uid = YmUserId(j->token, &r->err);
+            r->uid = uid;
+            return !uid.empty();
+        };
+        switch (j->kind) {
+            case YJ_SEARCH: {
+                const bool okT = YmSearch(j->token, j->s1, r->tracks, r->err);
+                const bool okA = YmSearchArtists(j->token, j->s1, r->artists);
+                r->ok = okT || (okA && !r->artists.empty());
+                break;
+            }
+            case YJ_ART_TRACKS:
+                r->ok = YmArtistTracks(j->token, j->s1, r->tracks, r->err);
+                break;
+            case YJ_ALBUM:
+                r->ok = YmAlbumTracks(j->token, j->s1, r->tracks, r->err);
+                break;
+            case YJ_PLAYLISTS:
+                if (needUid()) r->ok = YmPlaylists(j->token, uid, r->pls, r->err);
+                break;
+            case YJ_PL_TRACKS:  // s2 — владелец плейлиста, если он не наш («Плейлист дня»)
+                if (!j->s2.empty()) r->ok = YmPlaylistTracks(j->token, j->s2, j->s1, r->tracks, r->err);
+                else if (needUid()) r->ok = YmPlaylistTracks(j->token, uid, j->s1, r->tracks, r->err);
+                break;
+            case YJ_PLAY:
+                r->ok = YmDirectLink(j->token, j->track.id, r->url, r->err);
+                break;
+            case YJ_WAVE:
+                r->s1.clear();
+                r->ok = YmWaveFetch(*j, r->tracks, r->s1, r->session, r->err);
+                break;
+            case YJ_FEEDBACK:
+                YmWaveFeedback(j->token, j->session, j->s1, YmFullId(j->track), j->secs, j->s2, false, j->seed);
+                delete r;
+                r = nullptr;
+                break;
+            case YJ_LIKE:
+                if (needUid()) r->ok = YmSetLike(j->token, uid, j->track.id, j->s1 == "add", r->err);
+                break;
+            case YJ_LIKED:
+                if (needUid()) r->ok = YmLikedIds(j->token, uid, r->ids, r->err);
+                break;
+            case YJ_COVER:
+                r->ok = YmCover(j->track.cover, r->bytes);
+                break;
+            case YJ_THUMB:  // миниатюра для строки списка; r->s1 — uri обложки (ключ кэша)
+                r->ok = YmCover(j->s1, r->bytes, "100x100");
+                break;
+        }
+    } catch (...) {
+        if (r) {
+            r->ok = false;
+            r->err = L"внутренняя ошибка";
+        }
+    }
+    delete j;
+    if (r && (!g_hwnd || !PostMessageW(g_hwnd, WM_APP + 6, 0, (LPARAM)r))) delete r;
+}
+
+static DWORD WINAPI YmWorker(LPVOID) {
+    for (;;) {
+        WaitForSingleObject(g_ymSem, INFINITE);
+        if (g_ymStop) break;
+        YmJob* j = nullptr;
+        EnterCriticalSection(&g_ymCs);
+        if (!g_ymQ.empty()) {
+            j = g_ymQ.front();
+            g_ymQ.pop_front();
+        }
+        LeaveCriticalSection(&g_ymCs);
+        if (j) YmRunJob(j);
+    }
+    return 0;
+}
+
+static void YmStart() {
+    if (g_ymSem) return;
+    InitializeCriticalSection(&g_ymCs);
+    g_ymCsInit = true;
+    g_ymStop = false;
+    g_ymSem = CreateSemaphoreW(nullptr, 0, 1024, nullptr);
+    if (!g_ymSem) return;
+    for (int i = 0; i < 3; i++) g_ymThreads[i] = CreateThread(nullptr, 0, YmWorker, nullptr, 0, nullptr);
+}
+
+static void YmStop() {
+    if (!g_ymSem) return;
+    g_ymStop = true;
+    ReleaseSemaphore(g_ymSem, 3, nullptr);
+    for (int i = 0; i < 3; i++) {
+        if (!g_ymThreads[i]) continue;
+        WaitForSingleObject(g_ymThreads[i], 8000);
+        CloseHandle(g_ymThreads[i]);
+        g_ymThreads[i] = nullptr;
+    }
+    CloseHandle(g_ymSem);
+    g_ymSem = nullptr;
+    for (YmJob* j : g_ymQ) delete j;
+    g_ymQ.clear();
+    DeleteCriticalSection(&g_ymCs);
+    g_ymCsInit = false;
+}
+
+static YmJob* NewJob(int kind);  // ниже, после состояния
+
+// ---- состояние встроенного плеера (всё — в потоке окна)
+enum { PM_IDLE = 0, PM_SINGLE, PM_LIST, PM_WAVE };
+static const int kMaxSkips = 10;  // сколько недоступных треков подряд пропускаем
+
+static int g_pmode = PM_IDLE;
+static std::vector<YmTrack> g_q;  // очередь воспроизведения (одиночный трек / плейлист)
+static int g_qi = -1;
+static std::string g_uid;
+static std::vector<std::string> g_liked;
+static bool g_likedLoaded = false;
+
+static std::vector<YmTrack> g_waveBuf;
+static std::vector<YmTrack> g_waveHist;  // уже сыгранные треки «Моей волны» (для кнопки «назад»)
+static const size_t kWaveHistMax = 50;
+static std::string g_waveBatch, g_waveLast, g_waveSession;  // пачка, последний трек, радио-сессия «Моей волны»
+static bool g_waveBusy = false, g_waveWait = false;
+static long long g_waveGen = 0;
+static std::string g_waveSeed;       // пусто — обычная «Моя волна»; «track:ID» — волна по треку
+static std::wstring g_waveSeedName;  // название трека, по которому запущена волна
+static std::wstring g_srcLabel;      // откуда играет очередь («Плейлист: …», «Альбом: …»); пусто — не показываем
+
+static long long g_playGen = 0;     // поколение запроса запуска (устаревшие ответы отбрасываем)
+static YmTrack g_cur;
+static bool g_haveCur = false;
+static bool g_wantPlay = false;     // что хочет пользователь: играть или пауза
+static bool g_opening = false;      // источник ещё не открылся
+static double g_startAt = 0;        // с какой секунды начать после открытия (перемотка/возобновление)
+static int g_skipRun = 0;
+static int g_retry = 0;
+static ULONGLONG g_pausedAt = 0;
+static std::string g_coverBytes;
+static std::wstring g_status;       // последняя ошибка — показывается вместо исполнителя, пока ничего не играет
+
+static Pb::MediaPlayer g_mp{nullptr};
+static winrt::event_token g_tokEnded{}, g_tokFailed{}, g_tokOpened{}, g_tokNext{}, g_tokPrev{};
+
+// библиотека (панель поиска и плейлистов)
+static bool g_libOpen = false;
+static double g_libT = 0.0;         // анимация открытия 0..1
+static int g_libMode = 0;           // 0 — плейлисты, 1 — результаты поиска, 2 — треки плейлиста/исполнителя, 3 — настройки «Моей волны»
+static std::vector<YmPlaylist> g_pls;
+static std::vector<YmTrack> g_found, g_plTracks;
+static std::vector<YmArtist> g_foundArtists;  // исполнители из поиска (показываются над треками)
+static int g_libBack = 0;                     // откуда открыт список треков (режим 2): 0 — плейлисты, 1 — поиск
+static double g_libBackScroll = 0.0;
+static std::wstring g_libQuery, g_plTitle, g_errPl, g_errSearch, g_errTracks;
+static std::string g_plKind;
+static bool g_plLoaded = false, g_busyPl = false, g_busySearch = false, g_busyTracks = false;
+static long long g_genPl = 0, g_genSearch = 0, g_genTracks = 0;
+static double g_libScroll = 0.0;    // px
+static int g_libHover = -1;
+
+// ---- настройки «Моей волны»: под занятие, по характеру, под настроение, по языку
+struct WaveOpt {
+    const char* id;
+    const wchar_t* label;
+};
+static const WaveOpt kWaveAct[] = {{"any", L"Любое"},           {"wake-up", L"Просыпаюсь"}, {"road-trip", L"В дороге"},
+                                   {"work-background", L"Работаю"}, {"workout", L"Тренируюсь"}, {"fall-asleep", L"Засыпаю"}};
+static const WaveOpt kWaveDiv[] = {{"default", L"Любое"}, {"favorite", L"Любимое"}, {"discover", L"Незнакомое"},
+                                   {"popular", L"Популярное"}};
+static const WaveOpt kWaveMood[] = {{"all", L"Любое"}, {"active", L"Бодрое"}, {"fun", L"Весёлое"},
+                                    {"calm", L"Спокойное"}, {"sad", L"Грустное"}};
+static const WaveOpt kWaveLang[] = {{"any", L"Любой"}, {"russian", L"Русский"}, {"not-russian", L"Иностранный"},
+                                    {"without-words", L"Без слов"}};
+struct WaveGroup {
+    const wchar_t* title;
+    const WaveOpt* opts;
+    int n;
+};
+static const WaveGroup kWaveGroups[4] = {{L"Под занятие", kWaveAct, (int)ARRAYSIZE(kWaveAct)},
+                                         {L"По характеру", kWaveDiv, (int)ARRAYSIZE(kWaveDiv)},
+                                         {L"Под настроение", kWaveMood, (int)ARRAYSIZE(kWaveMood)},
+                                         {L"По языку", kWaveLang, (int)ARRAYSIZE(kWaveLang)}};
+static std::string g_wCfg[4] = {"any", "default", "all", "any"};  // текущий выбор (id опций)
+static bool g_wCfgLoaded = false;
+
+static void WaveCfgLoad() {
+    if (g_wCfgLoaded) return;
+    g_wCfgLoaded = true;
+    wchar_t buf[160] = {};
+    Wh_GetStringValue(L"waveCfg", buf, ARRAYSIZE(buf));
+    const std::string s = Utf8(buf);
+    size_t a = 0;
+    for (int k = 0; k < 4 && a <= s.size(); k++) {
+        size_t b = s.find('|', a);
+        if (b == std::string::npos) b = s.size();
+        const std::string v = s.substr(a, b - a);
+        a = b + 1;
+        for (int i = 0; i < kWaveGroups[k].n; i++)
+            if (v == kWaveGroups[k].opts[i].id) {
+                g_wCfg[k] = v;
+                break;
+            }
+    }
+}
+
+static void WaveCfgSave() {
+    const std::string s = g_wCfg[0] + "|" + g_wCfg[1] + "|" + g_wCfg[2] + "|" + g_wCfg[3];
+    Wh_SetStringValue(L"waveCfg", Wide(s).c_str());
+}
+
+static YmJob* NewJob(int kind) {
+    YmJob* j = new YmJob();
+    j->kind = kind;
+    j->token = g_set.ymToken;
+    j->uid = g_uid;
+    for (int k = 0; k < 4; k++) j->wcfg[k] = g_wCfg[k];
+    j->seed = g_waveSeed;
+    return j;
+}
+
+static bool IsLiked(const std::string& id) {
+    return std::find(g_liked.begin(), g_liked.end(), id) != g_liked.end();
+}
+
+static bool OwnAdvance(bool record = true);
+static void OwnTrackFailed(const std::wstring& why);
+static void OwnWaveFetch(bool first = false);
+
+static void OwnApplyVolume() {
+    if (!g_mp) return;
+    try {
+        g_mp.Volume(g_muted ? 0.0 : (double)std::clamp(g_vol, 0.f, 1.f));
+    } catch (...) {
+    }
+}
+
+static void OwnSaveVolume() {
+    if (OwnMode()) Wh_SetIntValue(L"volume", (int)(std::clamp(g_vol, 0.f, 1.f) * 100.f + 0.5f));
+}
+
+// «пусто»: ничего не играет
+static void OwnIdle() {
+    g_playGen++;
+    try {
+        if (g_mp) {
+            g_mp.Pause();
+            g_mp.Source(nullptr);
+        }
+    } catch (...) {
+    }
+    g_haveCur = false;
+    g_wantPlay = false;
+    g_opening = false;
+    g_pmode = PM_IDLE;
+    g_q.clear();
+    g_qi = -1;
+    g_waveBuf.clear();
+    g_waveHist.clear();
+    g_waveSession.clear();
+    g_waveWait = false;
+    g_waveGen++;
+    g_title = L"Яндекс Музыка";
+    g_artist = g_status.empty() ? std::wstring(L"Нажмите ▶ — запустится «Моя волна»") : g_status;
+    g_trackKey.clear();
+    g_durTicks = 0;
+    g_posBase = 0;
+    g_posBaseTick = GetTickCount64();
+    g_playing = false;
+    g_cover.clear();
+    g_coverPx = 0;
+    g_coverBytes.clear();
+    g_coverOld.clear();
+    g_palTgt = DefaultPalette();
+    g_textT = 0.0;
+    if (g_hwnd) StartAnim(g_hwnd);
+}
+
+static void OwnShutdownPlayer() {
+    if (!g_mp) return;
+    try {
+        g_mp.MediaEnded(g_tokEnded);
+        g_mp.MediaFailed(g_tokFailed);
+        g_mp.MediaOpened(g_tokOpened);
+        auto cm = g_mp.CommandManager();
+        cm.NextReceived(g_tokNext);
+        cm.PreviousReceived(g_tokPrev);
+        g_mp.Pause();
+        g_mp.Source(nullptr);
+        g_mp.Close();
+    } catch (...) {
+    }
+    g_mp = nullptr;
+}
+
+static void OwnEnsurePlayer() {
+    if (!OwnMode()) {
+        OwnShutdownPlayer();
+        return;
+    }
+    if (g_mp) return;
+    try {
+        g_mp = Pb::MediaPlayer();
+        g_mp.AutoPlay(false);  // Play() вызываем сами
+        g_tokEnded = g_mp.MediaEnded([](Pb::MediaPlayer const&, winrt::Windows::Foundation::IInspectable const&) {
+            if (g_hwnd) PostMessageW(g_hwnd, WM_APP + 8, 1, 0);
+        });
+        g_tokFailed = g_mp.MediaFailed([](Pb::MediaPlayer const&, Pb::MediaPlayerFailedEventArgs const&) {
+            if (g_hwnd) PostMessageW(g_hwnd, WM_APP + 8, 2, 0);
+        });
+        g_tokOpened = g_mp.MediaOpened([](Pb::MediaPlayer const&, winrt::Windows::Foundation::IInspectable const&) {
+            if (g_hwnd) PostMessageW(g_hwnd, WM_APP + 8, 3, 0);
+        });
+        // мультимедийные клавиши и системный оверлей громкости: «следующий»/«предыдущий» обрабатываем сами
+        auto cm = g_mp.CommandManager();
+        cm.NextBehavior().EnablingRule(Pb::MediaCommandEnablingRule::Always);
+        cm.PreviousBehavior().EnablingRule(Pb::MediaCommandEnablingRule::Always);
+        g_tokNext = cm.NextReceived(
+            [](Pb::MediaPlaybackCommandManager const&, Pb::MediaPlaybackCommandManagerNextReceivedEventArgs const& a) {
+                a.Handled(true);
+                if (g_hwnd) PostMessageW(g_hwnd, WM_APP + 8, 4, 0);
+            });
+        g_tokPrev = cm.PreviousReceived(
+            [](Pb::MediaPlaybackCommandManager const&,
+               Pb::MediaPlaybackCommandManagerPreviousReceivedEventArgs const& a) {
+                a.Handled(true);
+                if (g_hwnd) PostMessageW(g_hwnd, WM_APP + 8, 5, 0);
+            });
+        WaveCfgLoad();
+        g_vol = (float)std::clamp((int)Wh_GetIntValue(L"volume", 100), 0, 100) / 100.f;
+        OwnApplyVolume();
+    } catch (...) {
+        Wh_Log(L"MediaPlayer недоступен");
+        g_mp = nullptr;
+    }
+}
+
+// декодирует обложку из байтов (JPEG/PNG) и подменяет текущую; старая плавно перетекает в новую
+static bool OwnDecodeCover(bool crossfade) {
+    const int cs = CoverSize();
+    if (cs <= 0 || g_coverBytes.empty()) return false;
+    try {
+        winrt::Windows::Storage::Streams::InMemoryRandomAccessStream ms;
+        winrt::Windows::Storage::Streams::DataWriter dw(ms);
+        dw.WriteBytes(winrt::array_view<uint8_t const>((uint8_t const*)g_coverBytes.data(),
+                                                       (uint32_t)g_coverBytes.size()));
+        dw.StoreAsync().get();
+        dw.DetachStream();
+        ms.Seek(0);
+        std::vector<DWORD> prev = g_cover;
+        const int prevPx = g_coverPx;
+        if (!LoadCoverStream(ms, cs)) return false;
+        if (crossfade && !prev.empty()) {
+            g_coverOld.swap(prev);
+            g_coverOldPx = prevPx;
+            g_coverFade = 0.0;
+            if (g_hwnd) StartAnim(g_hwnd);
+        }
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+
+// новый текущий трек: заголовок, длительность, сброс текста песни, запрос обложки
+static void OwnSetCurrent(const YmTrack& t) {
+    g_cur = t;
+    g_haveCur = true;
+    g_retry = 0;
+    g_title = t.title;
+    g_artist = t.artists;
+    g_durTicks = t.durMs * 10000LL;
+    g_startTicks = 0;
+    g_posBase = 0;
+    g_posBaseTick = GetTickCount64();
+    g_seekHold = 0;
+    g_trackKey = g_title + L"\x1f" + g_artist;
+    g_lastSeen = GetTickCount64();
+    g_textT = 0.0;
+    g_coverBytes.clear();
+    if (t.cover.empty()) {
+        g_cover.clear();
+        g_coverPx = 0;
+        g_palTgt = DefaultPalette();
+    } else {
+        YmJob* c = NewJob(YJ_COVER);
+        c->track = t;
+        YmEnqueue(c);
+    }
+    if (g_hwnd) StartAnim(g_hwnd);
+}
+
+static void OwnWaveFeedback(const char* type, double secs) {
+    if (g_pmode != PM_WAVE || !g_haveCur) return;
+    YmJob* j = NewJob(YJ_FEEDBACK);
+    j->s1 = type;
+    j->s2 = g_waveBatch;
+    j->session = g_waveSession;
+    j->track = g_cur;
+    j->secs = secs;
+    YmEnqueue(j);
+}
+
+// ссылка получена — отдаём её MediaPlayer
+static void OwnStartStream(const std::string& url, double startSec) {
+    auto src = MCore::MediaSource::CreateFromUri(winrt::Windows::Foundation::Uri(winrt::hstring(Wide(url))));
+    Pb::MediaPlaybackItem item(src);
+    try {  // сведения о треке для системного оверлея
+        auto dp = item.GetDisplayProperties();
+        dp.Type(winrt::Windows::Media::MediaPlaybackType::Music);
+        dp.MusicProperties().Title(winrt::hstring(g_cur.title));
+        dp.MusicProperties().Artist(winrt::hstring(g_cur.artists));
+        item.ApplyDisplayProperties(dp);
+    } catch (...) {
+    }
+    g_startAt = startSec;
+    g_opening = true;
+    g_mp.Source(item);
+    OwnApplyVolume();
+    if (g_wantPlay) g_mp.Play();
+}
+
+// запустить трек (startSec > 0 — продолжить с этой секунды, метаданные не трогаем)
+static void OwnPlayTrack(const YmTrack& t, double startSec = 0.0) {
+    OwnEnsurePlayer();
+    if (!g_mp) return;
+    try {
+        g_mp.Pause();
+    } catch (...) {
+    }
+    g_status.clear();
+    if (!(g_haveCur && g_cur.id == t.id && startSec > 0.0)) OwnSetCurrent(t);
+    g_wantPlay = true;
+    g_opening = true;
+    g_playing = true;
+    g_posFreeze = true;
+    if (startSec > 0.0) {
+        g_posBase = (long long)(startSec * 1e7);
+        g_posBaseTick = GetTickCount64();
+    }
+    g_playGen++;
+    YmJob* j = NewJob(YJ_PLAY);
+    j->gen = g_playGen;
+    j->track = t;
+    j->secs = startSec;
+    YmEnqueue(j);
+    if (g_hwnd) StartAnim(g_hwnd);
+}
+
+static void OwnWaveFetch(bool first) {
+    if (g_waveBusy) return;
+    g_waveBusy = true;
+    YmJob* j = NewJob(YJ_WAVE);
+    j->gen = g_waveGen;
+    j->s1 = g_waveLast;
+    j->session = g_waveSession;
+    j->flag = first;
+    YmEnqueue(j);
+}
+
+// следующий трек по текущему режиму; false — играть больше нечего
+static bool OwnAdvance(bool record) {
+    if (g_pmode == PM_LIST) {
+        for (;;) {
+            g_qi++;
+            if (g_qi >= (int)g_q.size()) {
+                OwnIdle();
+                return false;
+            }
+            if (g_q[g_qi].available) {
+                YmTrack t = g_q[g_qi];
+                OwnPlayTrack(t);
+                return true;
+            }
+        }
+    }
+    if (g_pmode == PM_WAVE) {
+        if (g_waveBuf.empty()) {
+            g_waveWait = true;
+            OwnWaveFetch();
+            return true;
+        }
+        YmTrack t = g_waveBuf.front();
+        g_waveBuf.erase(g_waveBuf.begin());
+        g_waveLast = YmFullId(t);
+        if (record && g_haveCur && !g_cur.id.empty()) {  // запоминаем трек, с которого уходим
+            g_waveHist.push_back(g_cur);
+            if (g_waveHist.size() > kWaveHistMax) g_waveHist.erase(g_waveHist.begin());
+        }
+        OwnPlayTrack(t);
+        if (g_waveBuf.size() < 2) OwnWaveFetch();  // подкачиваем следующую пачку заранее
+        return true;
+    }
+    OwnIdle();
+    return false;
+}
+
+static void OwnTrackFailed(const std::wstring& why) {
+    Wh_Log(L"YM: %s", why.c_str());
+    g_skipRun++;
+    if (g_skipRun < kMaxSkips && (g_pmode == PM_LIST || g_pmode == PM_WAVE)) {
+        OwnAdvance(false);  // трек не заиграл — в историю «назад» его не кладём
+        return;
+    }
+    g_status = L"Не удалось воспроизвести: " + why;
+    OwnIdle();
+}
+
+static void OwnStartWave(bool keepSeed = false) {
+    OwnEnsurePlayer();
+    if (!g_mp) return;
+    if (!keepSeed) {  // обычная «Моя волна»
+        g_waveSeed.clear();
+        g_waveSeedName.clear();
+    }
+    try {
+        g_mp.Pause();
+    } catch (...) {
+    }
+    g_pmode = PM_WAVE;
+    g_q.clear();
+    g_qi = -1;
+    g_waveBuf.clear();
+    g_waveHist.clear();
+    g_waveBatch.clear();
+    g_waveLast.clear();
+    g_waveSession.clear();  // новая радио-сессия — с текущими настройками волны
+    g_waveGen++;
+    g_waveBusy = false;
+    g_waveWait = true;
+    g_skipRun = 0;
+    g_status.clear();
+    g_playGen++;  // ответ на запуск предыдущего трека больше не нужен
+    g_wantPlay = true;
+    g_haveCur = false;
+    g_title = g_waveSeed.empty() ? L"Моя волна" : L"Волна по треку";
+    g_artist = L"Подбираю треки…";
+    g_trackKey.clear();
+    g_durTicks = 0;
+    g_playing = true;
+    OwnWaveFetch(true);
+    if (g_hwnd) StartAnim(g_hwnd);
+}
+
+// выбор опции настройки «Моей волны»; если волна уже играет — перезапускаем её с новыми настройками
+static void OwnSetWaveCfg(int group, const std::string& id) {
+    if (group < 0 || group > 3 || g_wCfg[group] == id) return;
+    g_wCfg[group] = id;
+    WaveCfgSave();
+    if (g_pmode == PM_WAVE) OwnStartWave(true);
+}
+
+// «Волна по треку»: радио-сессия с сидом «track:ID»
+static void OwnStartWaveFromTrack(const YmTrack& t) {
+    if (t.id.empty()) return;
+    g_waveSeed = "track:" + t.id;
+    g_waveSeedName = t.title;
+    OwnStartWave(true);
+}
+
+// «Встряхнуть»: отдаём Яндексу «пропуск» текущего трека и просим совершенно новую радио-сессию (свежая подборка)
+static void OwnShakeWave() {
+    OwnEnsurePlayer();
+    if (!g_mp) return;
+    const bool wasWave = g_pmode == PM_WAVE;
+    if (wasWave && g_haveCur) OwnWaveFeedback("skip", (double)CurPos() / 1e7);
+    OwnStartWave(wasWave);  // волна по треку остаётся волной по треку; из других режимов — обычная «Моя волна»
+}
+
+static void OwnPlayQueue(const std::vector<YmTrack>& tracks, int idx, int mode) {
+    if (idx < 0 || idx >= (int)tracks.size()) return;
+    OwnEnsurePlayer();
+    if (!g_mp) return;
+    std::vector<YmTrack> copy = tracks;  // tracks может быть самим g_q
+    g_pmode = mode;
+    g_q = std::move(copy);
+    g_qi = idx;
+    g_waveBuf.clear();
+    g_waveHist.clear();
+    g_waveGen++;
+    g_waveWait = false;
+    g_skipRun = 0;
+    YmTrack t = g_q[idx];
+    OwnPlayTrack(t);
+}
+
+static void OwnSeekTicks(long long ticks) {
+    if (!g_mp || !g_haveCur) return;
+    ticks = std::max(0LL, ticks);
+    if (g_durTicks > 0) ticks = std::min(ticks, std::max(0LL, g_durTicks - 10000000LL));
+    g_posBase = ticks;
+    g_posBaseTick = GetTickCount64();
+    g_seekHold = g_posBaseTick + 1500;
+    if (g_opening) {  // ещё открывается — применим позицию, когда откроется
+        g_startAt = (double)ticks / 1e7;
+        return;
+    }
+    try {
+        g_mp.PlaybackSession().Position(winrt::Windows::Foundation::TimeSpan(ticks));
+    } catch (...) {
+    }
+}
+
+static void OwnSeek(double frac) {
+    if (g_durTicks <= 0) return;
+    OwnSeekTicks((long long)(std::clamp(frac, 0.0, 1.0) * (double)g_durTicks));
+}
+
+static void OwnToggle() {
+    if (!g_mp) return;
+    if (!g_haveCur) {
+        if (g_pmode == PM_IDLE) OwnStartWave();  // ничего не играло — включаем «Мою волну»
+        return;
+    }
+    try {
+        if (g_wantPlay) {
+            g_posBase = CurPos();
+            g_posBaseTick = GetTickCount64();
+            g_wantPlay = false;
+            g_playing = false;
+            g_pausedAt = GetTickCount64();
+            g_mp.Pause();
+        } else {
+            g_wantPlay = true;
+            if (GetTickCount64() - g_pausedAt > 60000 && !g_opening) {
+                // долгая пауза: соединение/ссылка могли протухнуть — берём свежую и продолжаем с той же секунды
+                YmTrack t = g_cur;
+                OwnPlayTrack(t, std::max(0.5, (double)g_posBase / 1e7));
+            } else {
+                g_playing = true;
+                g_posBaseTick = GetTickCount64();
+                g_mp.Play();
+            }
+        }
+    } catch (...) {
+    }
+    if (g_hwnd) StartAnim(g_hwnd);
+}
+
+static void OwnNext() {
+    if (!g_mp) return;
+    if (!g_haveCur) {
+        if (g_pmode == PM_IDLE) OwnStartWave();
+        return;
+    }
+    if (g_pmode == PM_WAVE) {
+        OwnWaveFeedback("skip", (double)CurPos() / 1e7);
+        OwnAdvance();
+    } else if (g_pmode == PM_LIST) {
+        OwnAdvance();
+    }  // одиночный трек: следующего нет
+}
+
+static void OwnPrev() {
+    if (!g_mp || !g_haveCur) return;
+    if (CurPos() > 5LL * 10000000LL) {
+        OwnSeekTicks(0);  // трек играет уже давно — в начало трека
+        return;
+    }
+    if (g_pmode == PM_WAVE) {  // «Моя волна»: возвращаемся к предыдущему треку из истории
+        if (g_waveHist.empty()) {
+            OwnSeekTicks(0);
+            return;
+        }
+        YmTrack t = g_waveHist.back();
+        g_waveHist.pop_back();
+        g_waveBuf.insert(g_waveBuf.begin(), g_cur);  // «следующий» снова вернёт трек, с которого ушли
+        OwnPlayTrack(t);
+        return;
+    }
+    if (g_pmode != PM_LIST || g_qi <= 0) {
+        OwnSeekTicks(0);  // в начало трека
+        return;
+    }
+    for (int i = g_qi - 1; i >= 0; i--) {
+        if (g_q[i].available) {
+            g_qi = i;
+            YmTrack t = g_q[i];
+            OwnPlayTrack(t);
+            return;
+        }
+    }
+    OwnSeekTicks(0);
+}
+
+static void OwnToggleLike() {
+    if (!g_haveCur || g_cur.id.empty()) return;
+    const bool add = !IsLiked(g_cur.id);
+    if (add) g_liked.push_back(g_cur.id);
+    else g_liked.erase(std::remove(g_liked.begin(), g_liked.end(), g_cur.id), g_liked.end());
+    YmJob* j = NewJob(YJ_LIKE);
+    j->track = g_cur;
+    j->s1 = add ? "add" : "remove";
+    YmEnqueue(j);
+    if (g_hwnd) StartAnim(g_hwnd);
+}
+
+// события MediaPlayer (приходят сообщением WM_APP+8)
+static void OwnOnEnded() {
+    if (g_opening || !g_haveCur) return;
+    OwnWaveFeedback("trackFinished", (double)g_cur.durMs / 1000.0);
+    OwnAdvance();  // одиночный трек закончился — вернёмся в «пусто»
+}
+
+static void OwnOnFailed() {
+    if (!g_haveCur) return;
+    if (g_retry < 1) {  // ссылка могла протухнуть — один раз пробуем заново с того же места
+        g_retry++;
+        YmTrack t = g_cur;
+        OwnPlayTrack(t, (double)CurPos() / 1e7);
+        return;
+    }
+    OwnTrackFailed(L"ошибка потока");
+}
+
+static void OwnOnOpened() {
+    g_opening = false;
+    g_skipRun = 0;
+    if (g_startAt > 0.5) {
+        try {
+            g_mp.PlaybackSession().Position(winrt::Windows::Foundation::TimeSpan((long long)(g_startAt * 1e7)));
+        } catch (...) {
+        }
+        g_posBase = (long long)(g_startAt * 1e7);
+        g_posBaseTick = GetTickCount64();
+        g_seekHold = g_posBaseTick + 1500;
+    }
+    g_startAt = 0;
+}
+
+// вызывается из Poll(): синхронизируем позицию и состояние с MediaPlayer
+static void OwnPoll() {
+    try {
+        OwnEnsurePlayer();
+        if (!g_mp || !g_haveCur) return;
+        const bool pl = g_wantPlay;
+        if (pl != g_playing) {
+            g_playing = pl;
+            if (g_hwnd) StartAnim(g_hwnd);
+        }
+        auto ps = g_mp.PlaybackSession();
+        const auto st = ps.PlaybackState();
+        g_posFreeze = g_opening || st == Pb::MediaPlaybackState::Opening || st == Pb::MediaPlaybackState::Buffering;
+        if (!g_opening && (st == Pb::MediaPlaybackState::Playing || st == Pb::MediaPlaybackState::Paused)) {
+            long long pos = ps.Position().count();
+            if (g_durTicks > 0) pos = std::clamp(pos, 0LL, g_durTicks);
+            else pos = std::max(0LL, pos);
+            if (GetTickCount64() >= g_seekHold && g_drag != 1) {
+                g_posBase = pos;
+                g_posBaseTick = GetTickCount64();
+            }
+        }
+        const int cs = CoverSize();  // масштаб/размер панели поменялся — декодируем обложку заново
+        if (cs > 0 && !g_cover.empty() && !g_coverBytes.empty() && g_coverPx != cs) OwnDecodeCover(false);
+    } catch (...) {
+    }
+}
+
+// сменили токен/режим в настройках
+static void OwnReconfigure() {
+    g_uid.clear();
+    g_liked.clear();
+    g_likedLoaded = false;
+    g_plLoaded = false;
+    g_pls.clear();
+    g_found.clear();
+    g_foundArtists.clear();
+    g_plTracks.clear();
+    g_busyPl = g_busySearch = g_busyTracks = false;
+    g_genPl++;
+    g_genSearch++;
+    g_genTracks++;
+    g_errPl.clear();
+    g_errSearch.clear();
+    g_errTracks.clear();
+    g_libOpen = false;
+    g_libMode = 0;
+    g_libScroll = 0.0;
+    g_status.clear();
+    if (OwnMode()) {
+        OwnEnsurePlayer();
+        OwnIdle();
+        YmEnqueue(NewJob(YJ_LIKED));
+    } else {
+        OwnIdle();
+        OwnShutdownPlayer();
+        g_playGen++;
+        ClearState();  // дальше Poll() снова берёт данные из системной медиа-сессии
+    }
+}
+
+// ---- библиотека: поиск и плейлисты
+static void LibSearch(const std::wstring& q) {
+    g_libQuery = q;
+    g_libMode = 1;
+    g_found.clear();
+    g_foundArtists.clear();
+    g_errSearch.clear();
+    g_libScroll = 0.0;
+    g_busySearch = true;
+    YmJob* j = NewJob(YJ_SEARCH);
+    j->gen = ++g_genSearch;
+    j->s1 = Utf8(q);
+    YmEnqueue(j);
+}
+
+static void LibLoadPlaylists(bool force) {
+    if (g_busyPl || (g_plLoaded && !force)) return;
+    g_busyPl = true;
+    g_errPl.clear();
+    YmJob* j = NewJob(YJ_PLAYLISTS);
+    j->gen = ++g_genPl;
+    YmEnqueue(j);
+}
+
+static void LibOpenPlaylist(int idx) {
+    if (idx < 0 || idx >= (int)g_pls.size()) return;
+    g_libMode = 2;
+    g_libBack = 0;
+    g_plTitle = g_pls[idx].title;
+    g_plKind = g_pls[idx].kind;
+    g_plTracks.clear();
+    g_errTracks.clear();
+    g_libScroll = 0.0;
+    g_busyTracks = true;
+    YmJob* j = NewJob(YJ_PL_TRACKS);
+    j->gen = ++g_genTracks;
+    j->s1 = g_plKind;
+    j->s2 = g_pls[(size_t)idx].uid;
+    YmEnqueue(j);
+}
+
+// профиль исполнителя: его треки показываем тем же списком, что и плейлист
+// back — куда ведёт «назад»: 0 — к плейлистам, 1 — к результатам поиска
+static void LibOpenArtistId(const std::string& id, const std::wstring& name, int back) {
+    g_libBack = back;
+    g_libMode = 2;
+    g_plTitle = name;
+    g_plKind = "artist:" + id;
+    g_plTracks.clear();
+    g_errTracks.clear();
+    g_libScroll = 0.0;
+    g_busyTracks = true;
+    YmJob* j = NewJob(YJ_ART_TRACKS);
+    j->gen = ++g_genTracks;
+    j->s1 = id;
+    YmEnqueue(j);
+}
+
+// альбом: его треки показываем тем же списком, что и плейлист
+static void LibOpenAlbumId(const std::string& id, const std::wstring& title, int back) {
+    g_libBack = back;
+    g_libMode = 2;
+    g_plTitle = title.empty() ? std::wstring(L"Альбом") : title;
+    g_plKind = "album:" + id;
+    g_plTracks.clear();
+    g_errTracks.clear();
+    g_libScroll = 0.0;
+    g_busyTracks = true;
+    YmJob* j = NewJob(YJ_ALBUM);
+    j->gen = ++g_genTracks;
+    j->s1 = id;
+    YmEnqueue(j);
+}
+
+// откуда запускается очередь из открытого списка библиотеки
+static std::wstring LibSourceLabel() {
+    if (g_libMode == 1) return g_libQuery.empty() ? std::wstring(L"Поиск") : L"Поиск: " + g_libQuery;
+    if (g_libMode != 2) return std::wstring();
+    if (g_plKind.compare(0, 7, "artist:") == 0) return L"Исполнитель: " + g_plTitle;
+    if (g_plKind.compare(0, 6, "album:") == 0) return L"Альбом: " + g_plTitle;
+    if (g_plKind == "liked") return L"Мне нравится";
+    return L"Плейлист: " + g_plTitle;
+}
+
+static void LibOpenArtist(int idx) {
+    if (idx < 0 || idx >= (int)g_foundArtists.size()) return;
+    const YmArtist a = g_foundArtists[(size_t)idx];
+    g_libBackScroll = g_libScroll;
+    LibOpenArtistId(a.id, a.name, 1);
+}
+
+static const std::vector<YmTrack>& LibTracks() {
+    return g_libMode == 2 ? g_plTracks : g_found;
+}
+
+// в режиме поиска сверху идут исполнители, потом треки
+static int LibArtistRows() { return g_libMode == 1 ? (int)g_foundArtists.size() : 0; }
+
+static int LibRowCount() {
+    if (g_libMode == 3) return 0;  // настройки волны — не список строк
+    return g_libMode == 0 ? (int)g_pls.size() : LibArtistRows() + (int)LibTracks().size();
+}
+
+static const YmArtist* LibRowArtist(int i) {
+    return (g_libMode == 1 && i >= 0 && i < (int)g_foundArtists.size()) ? &g_foundArtists[(size_t)i] : nullptr;
+}
+
+static const YmTrack* LibRowTrack(int i) {
+    if (g_libMode == 0 || g_libMode == 3) return nullptr;
+    const int k = i - LibArtistRows();
+    const std::vector<YmTrack>& v = LibTracks();
+    return (k >= 0 && k < (int)v.size()) ? &v[(size_t)k] : nullptr;
+}
+
+// ---- миниатюры обложек в строках списка (поиск, плейлисты): кэш по uri обложки
+struct Thumb {
+    std::vector<DWORD> px;
+    int sz = 0;
+    bool req = false;  // запрос уже отправлен
+};
+static std::map<std::string, Thumb> g_thumbs;
+static int ThumbSize() { return std::max(16, S(32)); }
+
+static bool DecodeThumb(const std::string& bytes, int size, std::vector<DWORD>& out) {
+    namespace Img = winrt::Windows::Graphics::Imaging;
+    if (bytes.empty() || size <= 0) return false;
+    try {
+        winrt::Windows::Storage::Streams::InMemoryRandomAccessStream ms;
+        winrt::Windows::Storage::Streams::DataWriter dw(ms);
+        dw.WriteBytes(winrt::array_view<uint8_t const>((uint8_t const*)bytes.data(), (uint32_t)bytes.size()));
+        dw.StoreAsync().get();
+        dw.DetachStream();
+        ms.Seek(0);
+        auto decoder = Img::BitmapDecoder::CreateAsync(ms).get();
+        Img::BitmapTransform tr;
+        tr.ScaledWidth(size);
+        tr.ScaledHeight(size);
+        tr.InterpolationMode(Img::BitmapInterpolationMode::Fant);
+        auto sb = decoder
+                      .GetSoftwareBitmapAsync(Img::BitmapPixelFormat::Bgra8, Img::BitmapAlphaMode::Premultiplied, tr,
+                                              Img::ExifOrientationMode::IgnoreExifOrientation,
+                                              Img::ColorManagementMode::DoNotColorManage)
+                      .get();
+        winrt::Windows::Storage::Streams::Buffer buf((uint32_t)size * size * 4);
+        sb.CopyToBuffer(buf);
+        buf.Length((uint32_t)size * size * 4);
+        DWORD* d = (DWORD*)buf.data();
+        out.assign(d, d + (size_t)size * size);
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+
+static const std::string& LibRowCover(int i) {
+    static const std::string none;
+    if (g_libMode == 0) return (i >= 0 && i < (int)g_pls.size()) ? g_pls[(size_t)i].cover : none;
+    if (const YmArtist* a = LibRowArtist(i)) return a->cover;
+    const YmTrack* t = LibRowTrack(i);
+    return t ? t->cover : none;
+}
+
+// загруженная миниатюра строки или nullptr
+static const Thumb* LibThumb(int i) {
+    const std::string& c = LibRowCover(i);
+    if (c.empty()) return nullptr;
+    auto it = g_thumbs.find(c);
+    return (it != g_thumbs.end() && !it->second.px.empty()) ? &it->second : nullptr;
+}
+
+// заказываем миниатюры для видимых строк (и чуть дальше); вызывается по таймеру, повторные запросы отсекаются
+static void LibRequestThumbs() {
+    if (!g_libOpen || !OwnMode()) return;
+    const int n = LibRowCount();
+    if (n <= 0) return;
+    const int rowH = std::max(1, S(40));
+    const int first = std::max(0, (int)(g_libScroll / (double)rowH) - 2);
+    const int last = std::min(n, first + 18);
+    if (g_thumbs.size() > 300) g_thumbs.clear();  // не копим бесконечно
+    for (int i = first; i < last; i++) {
+        const std::string& c = LibRowCover(i);
+        if (c.empty()) continue;
+        Thumb& th = g_thumbs[c];
+        if (th.req) continue;
+        th.req = true;
+        YmJob* j = NewJob(YJ_THUMB);
+        j->s1 = c;
+        YmEnqueue(j);
+    }
+}
+
+// что написать в списке вместо строк (загрузка/ошибка/пусто)
+static std::wstring LibMessage() {
+    if (g_libMode == 3) return L"";
+    if (g_libMode == 0) {
+        if (g_busyPl) return L"Загружаю плейлисты…";
+        if (!g_errPl.empty()) return L"Не удалось загрузить плейлисты: " + g_errPl;
+        if (g_pls.empty()) return g_plLoaded ? L"Плейлистов нет" : L"";
+        return L"";
+    }
+    if (g_libMode == 1) {
+        if (g_busySearch) return L"Ищу…";
+        if (!g_errSearch.empty()) return L"Ошибка поиска: " + g_errSearch;
+        if (g_found.empty() && g_foundArtists.empty()) return g_libQuery.empty() ? L"Нажмите на строку поиска и введите запрос" : L"Ничего не найдено";
+        return L"";
+    }
+    if (g_busyTracks) return L"Загружаю треки…";
+    if (!g_errTracks.empty()) return L"Не удалось загрузить треки: " + g_errTracks;
+    if (g_plTracks.empty()) return L"Плейлист пуст";
+    return L"";
+}
+
+// ответ фонового потока (WM_APP+6)
+static void OwnOnResult(YmRes* r) {
+    if (!r->uid.empty() && r->uid != g_uid) g_uid = r->uid;
+    switch (r->kind) {
+        case YJ_SEARCH:
+            if (r->gen != g_genSearch) break;
+            g_busySearch = false;
+            if (r->ok) {
+                g_found = std::move(r->tracks);
+                g_foundArtists = std::move(r->artists);
+                g_errSearch.clear();
+            } else {
+                g_errSearch = r->err.empty() ? std::wstring(L"неизвестная ошибка") : r->err;
+            }
+            break;
+        case YJ_PLAYLISTS:
+            if (r->gen != g_genPl) break;
+            g_busyPl = false;
+            if (r->ok) {
+                g_pls = std::move(r->pls);
+                g_plLoaded = true;
+                g_errPl.clear();
+            } else {
+                g_errPl = r->err.empty() ? std::wstring(L"неизвестная ошибка") : r->err;
+            }
+            break;
+        case YJ_PL_TRACKS:
+        case YJ_ART_TRACKS:
+        case YJ_ALBUM:
+            if (r->gen != g_genTracks) break;
+            g_busyTracks = false;
+            if (r->ok) {
+                g_plTracks = std::move(r->tracks);
+                g_errTracks.clear();
+            } else {
+                g_errTracks = r->err.empty() ? std::wstring(L"неизвестная ошибка") : r->err;
+            }
+            break;
+        case YJ_PLAY:
+            if (r->gen != g_playGen) break;
+            if (!r->ok) {
+                OwnTrackFailed(r->err.empty() ? std::wstring(L"нет ссылки на поток") : r->err);
+                break;
+            }
+            if (!g_mp) break;
+            try {
+                OwnStartStream(r->url, r->secs);
+            } catch (...) {
+                OwnTrackFailed(L"плеер не принял поток");
+                break;
+            }
+            if (r->secs <= 0.0) OwnWaveFeedback("trackStarted", -1.0);
+            break;
+        case YJ_WAVE:
+            g_waveBusy = false;
+            if (r->gen != g_waveGen || g_pmode != PM_WAVE) break;
+            if (r->ok) {
+                g_waveBatch = r->s1;
+                g_waveSession = r->session;
+                for (auto& t : r->tracks)
+                    if (t.available) g_waveBuf.push_back(t);
+            }
+            if (g_waveWait) {
+                g_waveWait = false;
+                if (!g_waveBuf.empty()) {
+                    OwnAdvance();
+                } else {
+                    g_status = r->ok ? std::wstring(L"«Моя волна» вернула пустой список")
+                                     : L"«Моя волна»: " + r->err;
+                    OwnIdle();
+                }
+            }
+            break;
+        case YJ_LIKE:
+            if (!r->ok) {  // не получилось — откатываем сердечко
+                if (r->s1 == "add") g_liked.erase(std::remove(g_liked.begin(), g_liked.end(), r->track.id), g_liked.end());
+                else if (!IsLiked(r->track.id)) g_liked.push_back(r->track.id);
+            }
+            break;
+        case YJ_LIKED:
+            if (r->ok) {
+                g_liked = std::move(r->ids);
+                g_likedLoaded = true;
+            }
+            break;
+        case YJ_THUMB: {
+            auto it = g_thumbs.find(r->s1);
+            if (it == g_thumbs.end()) break;
+            if (r->ok) {
+                const int sz = ThumbSize();
+                if (DecodeThumb(r->bytes, sz, it->second.px)) it->second.sz = sz;
+            }
+            break;
+        }
+        case YJ_COVER:
+            if (r->track.id != g_cur.id || !g_haveCur) break;
+            if (r->ok) {
+                g_coverBytes = std::move(r->bytes);
+                if (!OwnDecodeCover(true) && g_cover.empty()) g_palTgt = DefaultPalette();
+            } else {
+                g_cover.clear();
+                g_coverPx = 0;
+                g_palTgt = DefaultPalette();
+            }
+            break;
+    }
+}
+
 // ---------------------------------------------------------------- JSON-помощники
 // первое значение поля key (строка или число) в виде строки; пусто — поля нет
 static std::string JsonScalar(const std::string& js, const char* key) {
@@ -2011,13 +4079,21 @@ static bool StepAnim() {
     }
 
     // наведение и нажатие в развёрнутом режиме
-    for (int i = 1; i < 9; i++) busy |= Approach(g_hotT[i], g_hot == i ? 1.0 : 0.0, ms / 140.0);
-    for (int i = 1; i < 6; i++) busy |= Approach(g_pressT[i], g_pressed == i ? 1.0 : 0.0, ms / 90.0);
+    for (int i = 1; i < 20; i++) busy |= Approach(g_hotT[i], g_hot == i ? 1.0 : 0.0, ms / 140.0);
+    for (int i = 1; i < 8; i++) busy |= Approach(g_pressT[i], g_pressed == i ? 1.0 : 0.0, ms / 90.0);
 
     // панель текста песни: открытие и плавная прокрутка к текущей строке
     if (!g_expand && g_lyOpen) g_lyOpen = false;  // при сворачивании плеера панель закрывается
     if (!g_lyOpen || !g_set.showInfoBtn) g_diagShow = false;
     busy |= Approach(g_lyT, g_lyOpen ? 1.0 : 0.0, ms / 380.0);
+
+    // панель библиотеки: при сворачивании плеера закрывается вместе с окном ввода запроса
+    if (!g_expand && g_libOpen) {
+        g_libOpen = false;
+        CloseSearchPopup();
+    }
+    if (!OwnMode() && g_libOpen) g_libOpen = false;
+    busy |= Approach(g_libT, g_libOpen ? 1.0 : 0.0, ms / 380.0);
     if (g_lyOpen && g_lyState == 2) {
         if (g_lySynced) g_lyIdx = LyCurIndex();
         double d = g_lyIdx - g_lyScroll;
@@ -2068,21 +4144,63 @@ struct ExpLay {
     RECT volIcon, volBar, volHit;
     RECT lyrics, lyBtn;  // панель текста сверху и кнопка её открытия
     RECT lyChk;          // кнопка «i» (проверка источников) в углу панели текста
+    RECT libBtn, like;   // кнопка библиотеки (слева в ряду кнопок) и сердечко «нравится» (справа от названия)
+    RECT wavePill;       // плашка «Моя волна» над названием трека (только пока играет волна)
     int lyFull;          // полная высота панели текста
+    int libFull;         // полная высота панели библиотеки
     int H;
 };
+
+// подпись плашки: что сейчас играет
+static std::wstring WavePillLabel() {
+    if (g_pmode == PM_WAVE) return g_waveSeed.empty() ? L"Моя волна" : L"Волна по треку";
+    return g_srcLabel;
+}
+
+// плашка «откуда играет» нужна: волна (даже пока подбираются треки) или очередь из плейлиста/альбома/поиска
+static bool SourcePillOn() {
+    if (!OwnMode()) return false;
+    if (g_pmode == PM_WAVE) return true;
+    return g_pmode == PM_LIST && g_haveCur && !g_srcLabel.empty();
+}
+
+static int WavePillWidth() {
+    static int cacheKey = -1;
+    static std::wstring cacheLbl;
+    static int cacheW = 0;
+    const int fpx = S(std::max(9, g_set.fontSize - 3));
+    const std::wstring lbl = WavePillLabel();
+    if (cacheKey != fpx || cacheLbl != lbl) {
+        HDC dc = GetDC(nullptr);
+        HFONT f = CreateFontW(-fpx, 0, 0, 0, FW_NORMAL, 0, 0, 0, DEFAULT_CHARSET, 0, 0, ANTIALIASED_QUALITY, 0,
+                              L"Segoe UI");
+        HGDIOBJ old = SelectObject(dc, f);
+        SIZE sz = {};
+        GetTextExtentPoint32W(dc, lbl.c_str(), (int)lbl.size(), &sz);
+        SelectObject(dc, old);
+        DeleteObject(f);
+        ReleaseDC(nullptr, dc);
+        cacheKey = fpx;
+        cacheLbl = lbl;
+        cacheW = (int)sz.cx;
+    }
+    return cacheW + S(30);  // слева место под «эквалайзер»
+}
 
 static ExpLay CalcExpLay() {
     ExpLay L = {};
     const int W = g_we;
     const int pad = S(14), cs = CoverExpSize();
     // место под панель текста песни сверху (растёт при её открытии)
-    const int lyFull = S(176), lyGap = S(10);
-    const int yo = (int)std::lround((lyFull + lyGap) * Smooth01(g_lyT));
+    const int lyFull = S(176), libFull = S(272), lyGap = S(10);
+    const bool own = OwnMode();
+    // панели текста и библиотеки делят одно место; пока одна закрывается, а другая открывается, высоты складываются
+    const int yo = (int)std::lround((lyFull + lyGap) * Smooth01(g_lyT) + (libFull + lyGap) * Smooth01(g_libT));
     const int top = pad + yo;
     L.lyFull = lyFull;
+    L.libFull = libFull;
     L.lyrics = {pad, pad, W - pad, pad + std::max(0, yo - lyGap)};
-    if (g_set.showInfoBtn && L.lyrics.bottom - L.lyrics.top > S(40)) {
+    if (g_set.showInfoBtn && !g_libOpen && L.lyrics.bottom - L.lyrics.top > S(40)) {
         const int cb = S(26), cm = S(6);
         L.lyChk = {L.lyrics.right - cm - cb, L.lyrics.top + cm, L.lyrics.right - cm, L.lyrics.top + cm + cb};
     }
@@ -2090,9 +4208,18 @@ static ExpLay CalcExpLay() {
 
     const int tx = pad + cs + S(12);
     const int lh1 = S(g_set.fontSize + 2) + S(6), lh2 = S(g_set.fontSize) + S(4);
-    const int ty = top + (cs - lh1 - lh2) / 2;
-    L.title = {tx, ty, W - pad, ty + lh1};
-    L.artist = {tx, ty + lh1, W - pad, ty + lh1 + lh2};
+    const bool waveOn = SourcePillOn();  // над названием — плашка «откуда играет»
+    const int lw = waveOn ? S(18) : 0;
+    const int ty = top + (cs - lh1 - lh2 - lw) / 2;
+    int tr = W - pad;
+    if (own) {  // сердечко «нравится» справа от названия
+        const int lk = S(32), lky = top + (cs - lk) / 2;
+        L.like = {W - pad - lk, lky, W - pad, lky + lk};
+        tr = L.like.left - S(6);
+    }
+    if (waveOn) L.wavePill = {tx, ty, std::min(tr, tx + WavePillWidth()), ty + S(16)};
+    L.title = {tx, ty + lw, tr, ty + lw + lh1};
+    L.artist = {tx, ty + lw + lh1, tr, ty + lw + lh1 + lh2};
 
     const int barH = std::max(3, S(5));
     const int by = top + cs + S(12);
@@ -2105,6 +4232,7 @@ static ExpLay CalcExpLay() {
     const int cy = ly + lh + S(6) + S(20), half = S(20);
     L.play = {W / 2 - half, cy - half, W / 2 + half, cy + half};
     L.lyBtn = {W - pad - S(34), cy - S(17), W - pad, cy + S(17)};
+    if (own) L.libBtn = {pad, cy - S(17), pad + S(34), cy + S(17)};
     L.prev = {W / 2 - S(64) - half, cy - half, W / 2 - S(64) + half, cy + half};
     L.next = {W / 2 + S(64) - half, cy - half, W / 2 + S(64) + half, cy + half};
 
@@ -2115,6 +4243,505 @@ static ExpLay CalcExpLay() {
     L.volHit = {vx0 - S(4), vy - S(12), W - pad, vy + S(12)};
     L.H = vy + S(12) + pad;
     return L;
+}
+
+// ---- исполнители в строке под названием трека: у каждого имени свой участок (x в координатах «кадра»)
+static int g_artHover = -1;  // над каким исполнителем курсор (индекс в g_cur.artistList)
+
+static void ArtistSpans(const ExpLay& L, std::vector<std::pair<int, int>>& sp) {
+    sp.clear();
+    if (!g_haveCur || g_cur.artistList.empty()) return;
+    HDC dc = GetDC(nullptr);
+    HFONT f = CreateFontW(-S(g_set.fontSize), 0, 0, 0, FW_NORMAL, 0, 0, 0, DEFAULT_CHARSET, 0, 0, ANTIALIASED_QUALITY, 0,
+                          L"Segoe UI");
+    HGDIOBJ old = SelectObject(dc, f);
+    std::wstring pre;
+    for (size_t i = 0; i < g_cur.artistList.size(); i++) {
+        if (i) pre += L", ";
+        SIZE a = {}, b = {};
+        GetTextExtentPoint32W(dc, pre.c_str(), (int)pre.size(), &a);
+        pre += g_cur.artistList[i].second;
+        GetTextExtentPoint32W(dc, pre.c_str(), (int)pre.size(), &b);
+        const int x0 = (int)L.artist.left + (int)a.cx;
+        const int x1 = std::min((int)L.artist.left + (int)b.cx, (int)L.artist.right);
+        sp.push_back({x0, std::max(x0, x1)});
+    }
+    SelectObject(dc, old);
+    DeleteObject(f);
+    ReleaseDC(nullptr, dc);
+}
+
+// индекс исполнителя под координатой fx или -1 (кликабельны только имена с известным id)
+static int ArtistAtX(const ExpLay& L, int fx) {
+    std::vector<std::pair<int, int>> sp;
+    ArtistSpans(L, sp);
+    for (size_t i = 0; i < sp.size(); i++)
+        if (fx >= sp[i].first && fx < sp[i].second && !g_cur.artistList[i].first.empty()) return (int)i;
+    return -1;
+}
+
+// профиль исполнителя: открываем библиотеку и показываем его треки (как при выборе исполнителя в поиске)
+static void OpenArtistFromPlayer(HWND h, int idx) {
+    if (!g_haveCur || idx < 0 || idx >= (int)g_cur.artistList.size()) return;
+    const std::pair<std::string, std::wstring> a = g_cur.artistList[(size_t)idx];
+    if (a.first.empty()) return;
+    g_lyOpen = false;  // панели текста и библиотеки делят одно место
+    g_diagShow = false;
+    CloseSearchPopup();
+    g_libOpen = true;
+    LibLoadPlaylists(false);  // чтобы кнопка «назад» вела к списку плейлистов
+    LibOpenArtistId(a.first, a.second, 0);
+    StartAnim(h);
+}
+
+// открыть библиотеку и показать профиль исполнителя / альбом (из меню трека)
+static void OpenLibraryFor(HWND h, bool& fromSearch) {
+    fromSearch = g_libOpen && g_libMode == 1;
+    if (fromSearch) g_libBackScroll = g_libScroll;
+    g_lyOpen = false;
+    g_diagShow = false;
+    if (!fromSearch) CloseSearchPopup();
+    if (!g_libOpen) g_libOpen = true;
+    LibLoadPlaylists(false);
+}
+
+static void OpenAlbumOfTrack(HWND h, const YmTrack& t) {
+    if (t.albumId.empty()) return;
+    bool fs = false;
+    OpenLibraryFor(h, fs);
+    LibOpenAlbumId(t.albumId, t.albumTitle, fs ? 1 : 0);
+    StartAnim(h);
+}
+
+static void OpenArtistOf(HWND h, const std::string& id, const std::wstring& name) {
+    if (id.empty()) return;
+    bool fs = false;
+    OpenLibraryFor(h, fs);
+    LibOpenArtistId(id, name, fs ? 1 : 0);
+    StartAnim(h);
+}
+
+// контекстное меню трека (ПКМ): волна по треку, альбом, исполнители
+static void ShowTrackMenu(HWND h, YmTrack t) {  // копия: пока меню открыто, списки могут обновиться
+    enum { C_WAVE = 1, C_ALBUM, C_ART0 = 10 };
+    HMENU m = CreatePopupMenu();
+    if (!m) return;
+    AppendMenuW(m, MF_STRING, C_WAVE, L"Волна по треку");
+    AppendMenuW(m, MF_STRING | (t.albumId.empty() ? MF_GRAYED : 0), C_ALBUM, L"Открыть альбом");
+    bool sep = false;
+    for (size_t i = 0; i < t.artistList.size() && i < 5; i++) {
+        if (t.artistList[i].first.empty()) continue;
+        if (!sep) {
+            AppendMenuW(m, MF_SEPARATOR, 0, nullptr);
+            sep = true;
+        }
+        std::wstring name = t.artistList[i].second, esc;
+        for (wchar_t c : name) {
+            esc += c;
+            if (c == L'&') esc += L'&';
+        }
+        AppendMenuW(m, MF_STRING, (UINT_PTR)(C_ART0 + i), (L"Исполнитель: " + esc).c_str());
+    }
+    POINT pt;
+    GetCursorPos(&pt);
+    g_menuOpen = true;
+    SetForegroundWindow(h);
+    const int cmd = (int)TrackPopupMenu(m, TPM_RETURNCMD | TPM_RIGHTBUTTON | TPM_NONOTIFY, pt.x, pt.y, 0, h, nullptr);
+    PostMessageW(h, WM_NULL, 0, 0);
+    DestroyMenu(m);
+    g_menuOpen = false;
+    if (cmd == C_WAVE) {
+        OwnStartWaveFromTrack(t);
+    } else if (cmd == C_ALBUM) {
+        OpenAlbumOfTrack(h, t);
+    } else if (cmd >= C_ART0 && cmd < C_ART0 + (int)t.artistList.size()) {
+        OpenArtistOf(h, t.artistList[(size_t)(cmd - C_ART0)].first, t.artistList[(size_t)(cmd - C_ART0)].second);
+    }
+    // курсор мог уйти с виджета, пока было открыто меню
+    RECT wr;
+    POINT cp;
+    GetWindowRect(h, &wr);
+    GetCursorPos(&cp);
+    if (!PtInRect(&wr, cp)) OnLeave(h);
+    StartAnim(h);
+}
+
+// ---- библиотека (поиск, плейлисты): раскладка панели; координаты в той же системе, что и переданный прямоугольник
+struct LibLay {
+    RECT search, wave, tune, shake, tabA, tabB, title, list;
+    int rowH;
+};
+
+// lp — прямоугольник панели (при открытии растёт сверху вниз), libFull — её полная высота;
+// содержимое привязано к нижнему краю, поэтому при анимации оно «выезжает», а не прыгает
+static LibLay CalcLibLay(const RECT& lp, int libFull) {
+    LibLay Y = {};
+    const int m = S(8), hh = S(32), tabH = S(24), gap = S(6);
+    const int y0 = lp.bottom - libFull;
+    const int waveW = S(84), btnW = S(30);
+    // верхний ряд: поиск | «Моя волна» | настройки волны | встряхнуть
+    Y.shake = {lp.right - m - btnW, y0 + m, lp.right - m, y0 + m + hh};
+    Y.tune = {Y.shake.left - gap - btnW, y0 + m, Y.shake.left - gap, y0 + m + hh};
+    Y.wave = {Y.tune.left - gap - waveW, y0 + m, Y.tune.left - gap, y0 + m + hh};
+    Y.search = {lp.left + m, y0 + m, Y.wave.left - gap, y0 + m + hh};
+    const int ty = y0 + m + hh + gap;
+    Y.tabA = {lp.left + m, ty, lp.left + m + S(98), ty + tabH};
+    Y.tabB = {Y.tabA.right + gap, ty, Y.tabA.right + gap + S(98), ty + tabH};
+    Y.title = {Y.tabB.right + S(10), ty, lp.right - m, ty + tabH};
+    Y.list = {lp.left + m, ty + tabH + S(4), lp.right - m, lp.bottom - m};
+    Y.rowH = S(40);
+    return Y;
+}
+
+// ---- настройки «Моей волны»: «чипы» опций, перенос по строкам; координаты — внутри списка (без прокрутки)
+struct WaveChip {
+    RECT r;
+    int g, o;  // группа и опция
+};
+struct WaveLay {
+    std::vector<WaveChip> chips;
+    int labelY[4];
+    int labelH;
+    int noteY;
+    int contentH;
+};
+
+static WaveLay CalcWaveLay(const LibLay& Y) {
+    WaveLay W = {};
+    const int fpx = S(std::max(9, g_set.fontSize - 2));
+    static int cacheKey = -1;
+    static int cw[4][8];
+    if (cacheKey != fpx) {  // ширины подписей по реальному шрифту (тот же, что у вкладок библиотеки)
+        HDC dc = GetDC(nullptr);
+        HFONT f = CreateFontW(-fpx, 0, 0, 0, FW_SEMIBOLD, 0, 0, 0, DEFAULT_CHARSET, 0, 0, ANTIALIASED_QUALITY, 0,
+                              L"Segoe UI");
+        HGDIOBJ old = SelectObject(dc, f);
+        for (int g = 0; g < 4; g++)
+            for (int o = 0; o < kWaveGroups[g].n && o < 8; o++) {
+                SIZE sz = {};
+                const wchar_t* t = kWaveGroups[g].opts[o].label;
+                GetTextExtentPoint32W(dc, t, (int)wcslen(t), &sz);
+                cw[g][o] = (int)sz.cx;
+            }
+        SelectObject(dc, old);
+        DeleteObject(f);
+        ReleaseDC(nullptr, dc);
+        cacheKey = fpx;
+    }
+    const int left = S(6), right = (int)(Y.list.right - Y.list.left) - S(10);
+    const int chipH = S(26), gx = S(6), gy = S(6), padX = S(11);
+    W.labelH = S(16);
+    int y = S(2);
+    W.noteY = y;
+    y += S(18);
+    for (int g = 0; g < 4; g++) {
+        W.labelY[g] = y;
+        y += W.labelH + S(3);
+        int x = left;
+        for (int o = 0; o < kWaveGroups[g].n && o < 8; o++) {
+            const int w = cw[g][o] + 2 * padX;
+            if (x + w > right && x > left) {
+                x = left;
+                y += chipH + gy;
+            }
+            RECT r = {x, y, x + w, y + chipH};
+            W.chips.push_back({r, g, o});
+            x += w + gx;
+        }
+        y += chipH + S(12);
+    }
+    W.contentH = y;
+    return W;
+}
+
+static double LibMaxScroll(const LibLay& Y) {
+    const double lh = (double)(Y.list.bottom - Y.list.top);
+    if (g_libMode == 3) return std::max(0.0, (double)CalcWaveLay(Y).contentH - lh);
+    return std::max(0.0, (double)LibRowCount() * Y.rowH - lh);
+}
+
+// чип настроек под курсором (индекс в WaveLay::chips) или -1
+static int WaveChipAt(const LibLay& Y, int x, int y) {
+    if (!In(Y.list, x, y)) return -1;
+    const WaveLay W = CalcWaveLay(Y);
+    const int ox = (int)Y.list.left, oy = (int)Y.list.top - (int)std::lround(g_libScroll);
+    for (size_t i = 0; i < W.chips.size(); i++) {
+        RECT r = W.chips[i].r;
+        OffsetRect(&r, ox, oy);
+        if (In(r, x, y)) return (int)i;
+    }
+    return -1;
+}
+
+static int LibRowAt(const LibLay& Y, int x, int y) {
+    if (Y.rowH <= 0 || !In(Y.list, x, y)) return -1;
+    int i = (int)floor(((double)(y - Y.list.top) + g_libScroll) / (double)Y.rowH);
+    return (i >= 0 && i < LibRowCount()) ? i : -1;
+}
+
+// ---- ввод поискового запроса. Виджет не активируется (WS_EX_NOACTIVATE), поэтому обычное поле ввода
+// клавиатуру не получает. Поле рисует сам виджет, а клавиши, пока оно активно, перехватывает низкоуровневый хук:
+// съедаются только печатные символы и клавиши правки (←, →, Home, End, Del, Backspace, Enter, Esc, Ctrl+V),
+// всё остальное (Win-/Alt-комбинации, F-клавиши, громкость и т. д.) проходит как обычно
+static bool g_searchActive = false;
+static std::wstring g_searchText;
+static int g_searchCaret = 0;
+static HHOOK g_kbHook = nullptr;
+static ULONGLONG g_searchBeganAt = 0, g_searchLastKey = 0;
+static RECT g_searchScr = {};  // поле поиска в экранных координатах (для проверки кликов мимо)
+static bool g_kbSwallowed[256] = {};
+static const size_t kSearchMax = 200;
+
+static LRESULT CALLBACK SearchKbProc(int code, WPARAM w, LPARAM l) {
+    if (code != HC_ACTION || !g_searchActive || !g_hwnd || !l) return CallNextHookEx(nullptr, code, w, l);
+    const KBDLLHOOKSTRUCT* k = (const KBDLLHOOKSTRUCT*)l;
+    const DWORD vk = k->vkCode;
+    if (vk > 255 || (k->flags & LLKHF_INJECTED)) return CallNextHookEx(nullptr, code, w, l);
+    const bool down = (w == WM_KEYDOWN || w == WM_SYSKEYDOWN);
+    if (!down) {  // отпускание клавиши, нажатие которой мы съели
+        if (g_kbSwallowed[vk]) {
+            g_kbSwallowed[vk] = false;
+            return 1;
+        }
+        return CallNextHookEx(nullptr, code, w, l);
+    }
+    const bool ctrl = (GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0;
+    const bool alt = (k->flags & LLKHF_ALTDOWN) != 0;
+    const bool shift = (GetAsyncKeyState(VK_SHIFT) & 0x8000) != 0;
+    const bool win = ((GetAsyncKeyState(VK_LWIN) | GetAsyncKeyState(VK_RWIN)) & 0x8000) != 0;
+    if (win || (alt && !ctrl)) return CallNextHookEx(nullptr, code, w, l);  // системные комбинации
+    const bool editCtrl = ctrl && !alt;  // Ctrl+Alt — это AltGr: даёт обычные символы
+
+    bool handled = false;
+    wchar_t chars[4] = {};
+    int nch = 0;
+    switch (vk) {
+        case VK_BACK:
+        case VK_DELETE:
+        case VK_LEFT:
+        case VK_RIGHT:
+        case VK_HOME:
+        case VK_END:
+        case VK_RETURN:
+        case VK_ESCAPE:
+        case VK_TAB:
+            handled = true;
+            break;
+        default:
+            if (editCtrl) {
+                handled = (vk == 'V');
+            } else {
+                BYTE ks[256] = {};
+                if (shift) ks[VK_SHIFT] = 0x80;
+                if (ctrl) ks[VK_CONTROL] = 0x80;
+                if (alt) ks[VK_MENU] = 0x80;
+                if (GetKeyState(VK_CAPITAL) & 1) ks[VK_CAPITAL] = 1;
+                HWND fg = GetForegroundWindow();
+                HKL hkl = GetKeyboardLayout(fg ? GetWindowThreadProcessId(fg, nullptr) : 0);
+                WCHAR buf[8] = {};
+                const int n = ToUnicodeEx(vk, k->scanCode, ks, buf, 8, 0x4, hkl);  // 0x4 — не менять состояние «мёртвых» клавиш
+                if (n > 0 && buf[0] >= 0x20 && buf[0] != 0x7f) {
+                    for (int i = 0; i < n && nch < 3; i++) chars[nch++] = buf[i];
+                    handled = true;
+                } else if (n < 0) {
+                    handled = true;  // «мёртвая» клавиша — не отдаём чужому окну
+                }
+            }
+    }
+    if (!handled) return CallNextHookEx(nullptr, code, w, l);
+    g_kbSwallowed[vk] = true;
+    const WPARAM wp = (WPARAM)vk | (editCtrl ? 0x100 : 0);
+    if (nch == 0) PostMessageW(g_hwnd, WM_APP + 10, wp, 0);
+    else
+        for (int i = 0; i < nch; i++) PostMessageW(g_hwnd, WM_APP + 10, wp, (LPARAM)chars[i]);
+    return 1;
+}
+
+static void SearchUnhook() {
+    if (g_kbHook) {
+        UnhookWindowsHookEx(g_kbHook);
+        g_kbHook = nullptr;
+    }
+    std::fill(std::begin(g_kbSwallowed), std::end(g_kbSwallowed), false);
+}
+
+// закончить ввод; submit — выполнить поиск по набранному
+static void SearchEnd(bool submit) {
+    if (!g_searchActive) return;
+    g_searchActive = false;
+    SearchUnhook();
+    std::wstring t = g_searchText;
+    size_t b = t.find_first_not_of(L" \t\r\n"), e = t.find_last_not_of(L" \t\r\n");
+    t = b == std::wstring::npos ? std::wstring() : t.substr(b, e - b + 1);
+    if (submit && !t.empty()) LibSearch(t);
+    if (g_hwnd) PostMessageW(g_hwnd, WM_APP + 9, 0, 0);  // если курсор не над плеером — обычное сворачивание
+}
+
+static void CloseSearchPopup() { SearchEnd(false); }
+
+static void SearchShutdown() {  // при выгрузке мода: без сообщений окну
+    g_searchActive = false;
+    SearchUnhook();
+}
+
+// fr — прямоугольник поля поиска в координатах «кадра» развёрнутого плеера
+static void SearchBegin(const RECT& fr) {
+    if (g_searchActive) return;
+    g_kbHook = SetWindowsHookExW(WH_KEYBOARD_LL, SearchKbProc, GetModuleHandleW(nullptr), 0);
+    if (!g_kbHook) {
+        Wh_Log(L"не удалось установить перехват клавиатуры: %lu", GetLastError());
+        return;
+    }
+    g_searchText = g_libQuery;
+    g_searchCaret = (int)g_searchText.size();
+    g_searchBeganAt = g_searchLastKey = GetTickCount64();
+    const int x = g_x + g_oxE + fr.left, y = g_y + g_oyE + fr.top;
+    g_searchScr = {x, y, x + (fr.right - fr.left), y + (fr.bottom - fr.top)};
+    std::fill(std::begin(g_kbSwallowed), std::end(g_kbSwallowed), false);
+    g_searchActive = true;
+}
+
+static void SearchPaste() {
+    if (!OpenClipboard(g_hwnd)) return;
+    HANDLE hd = GetClipboardData(CF_UNICODETEXT);
+    if (hd) {
+        const wchar_t* p = (const wchar_t*)GlobalLock(hd);
+        if (p) {
+            std::wstring add(p);
+            GlobalUnlock(hd);
+            for (auto& ch : add)
+                if (ch < 0x20) ch = L' ';  // переводы строк и табуляции — в пробелы
+            const size_t room = g_searchText.size() < kSearchMax ? kSearchMax - g_searchText.size() : 0;
+            if (add.size() > room) add.resize(room);
+            g_searchText.insert((size_t)g_searchCaret, add);
+            g_searchCaret += (int)add.size();
+        }
+    }
+    CloseClipboard();
+}
+
+// клавиша из хука (приходит сообщением WM_APP+10)
+static void SearchKey(UINT vk, bool ctrl, wchar_t ch) {
+    g_searchLastKey = GetTickCount64();
+    std::wstring& t = g_searchText;
+    int& c = g_searchCaret;
+    c = std::clamp(c, 0, (int)t.size());
+    if (vk == 'V' && ctrl) {
+        SearchPaste();
+        return;
+    }
+    switch (vk) {
+        case VK_RETURN:
+            SearchEnd(true);
+            return;
+        case VK_ESCAPE:
+            SearchEnd(false);
+            return;
+        case VK_BACK:
+            if (ctrl) {  // слово целиком
+                int st = c;
+                while (st > 0 && t[(size_t)st - 1] == L' ') st--;
+                while (st > 0 && t[(size_t)st - 1] != L' ') st--;
+                t.erase((size_t)st, (size_t)(c - st));
+                c = st;
+            } else if (c > 0) {
+                t.erase((size_t)c - 1, 1);
+                c--;
+            }
+            return;
+        case VK_DELETE:
+            if (c < (int)t.size()) t.erase((size_t)c, 1);
+            return;
+        case VK_LEFT:
+            if (c > 0) c--;
+            return;
+        case VK_RIGHT:
+            if (c < (int)t.size()) c++;
+            return;
+        case VK_HOME:
+            c = 0;
+            return;
+        case VK_END:
+            c = (int)t.size();
+            return;
+        default:
+            break;
+    }
+    if (ch >= 0x20 && t.size() < kSearchMax) {
+        t.insert((size_t)c, 1, ch);
+        c++;
+    }
+}
+
+static void ToggleLibrary(HWND h) {
+    g_libOpen = !g_libOpen;
+    if (g_libOpen) {
+        g_lyOpen = false;  // панели текста и библиотеки делят одно место
+        g_diagShow = false;
+        LibLoadPlaylists(false);
+    }
+    StartAnim(h);
+}
+
+// клик внутри открытой панели библиотеки; fx, fy — в координатах «кадра»
+static void LibClick(HWND h, const ExpLay& L, int fx, int fy) {
+    const LibLay Y = CalcLibLay(L.lyrics, L.libFull);
+    if (In(Y.search, fx, fy)) {
+        SearchBegin(Y.search);
+    } else if (In(Y.wave, fx, fy)) {
+        OwnStartWave();
+    } else if (In(Y.tune, fx, fy)) {  // настройки «Моей волны» (повторное нажатие — назад к плейлистам)
+        if (g_libMode == 3) {
+            g_libMode = 0;
+            LibLoadPlaylists(false);
+        } else {
+            g_libMode = 3;
+        }
+        g_libScroll = 0.0;
+    } else if (In(Y.shake, fx, fy)) {  // «Встряхнуть Мою волну»
+        OwnShakeWave();
+    } else if (In(Y.tabA, fx, fy)) {  // «Плейлисты» / «‹ Плейлисты» / «‹ Поиск» (из профиля исполнителя)
+        if (g_libMode == 2 && g_libBack == 1) {
+            g_libMode = 1;
+            g_libScroll = g_libBackScroll;
+        } else {
+            g_libMode = 0;
+            g_libScroll = 0.0;
+            LibLoadPlaylists(false);
+        }
+    } else if (In(Y.tabB, fx, fy)) {  // «Поиск» / «▶ Играть всё»
+        if (g_libMode == 2) {
+            g_srcLabel = LibSourceLabel();
+            OwnPlayQueue(g_plTracks, 0, PM_LIST);
+        } else {
+            g_libMode = 1;
+            g_libScroll = 0.0;
+        }
+    } else if (g_libMode == 3) {  // выбор опции настройки волны
+        const int ci = WaveChipAt(Y, fx, fy);
+        if (ci >= 0) {
+            const WaveLay WL = CalcWaveLay(Y);
+            const WaveChip& c = WL.chips[(size_t)ci];
+            OwnSetWaveCfg(c.g, kWaveGroups[c.g].opts[c.o].id);
+        }
+    } else {
+        const int row = LibRowAt(Y, fx, fy);
+        if (row >= 0) {
+            if (g_libMode == 0) {
+                LibOpenPlaylist(row);
+            } else if (g_libMode == 1) {
+                if (LibRowArtist(row)) LibOpenArtist(row);  // профиль исполнителя
+                else {
+                    g_srcLabel = LibSourceLabel();
+                    OwnPlayQueue(g_found, row - LibArtistRows(), PM_LIST);  // треки поиска — очередь
+                }
+            } else {
+                g_srcLabel = LibSourceLabel();
+                OwnPlayQueue(g_plTracks, row, PM_LIST);
+            }
+        }
+    }
+    StartAnim(h);
 }
 
 // ---- растровые примитивы (буфер — премультиплицированный BGRA размером g_w x g_h)
@@ -2184,14 +4811,71 @@ static void FillTri(DWORD* px, float ax, float ay, float bx, float by, float cx,
     }
 }
 
+// сердечко по кривой (x²+y²−1)³ = x²·y³, покрытие считается по подвыборкам 4x4 (без артефактов на краях).
+// (cx,cy) — начало координат кривой (центр сердечка на 0.125·s выше), s — масштаб.
+// k > 0 — вырезать такое же сердечко меньшего размера (k — его доля): получается контур; k = 0 — сплошное
+static void DrawHeart(DWORD* px, float cx, float cy, float s, float k, unsigned R, unsigned G, unsigned B,
+                      unsigned a, int clipT = -1000000, int clipB = 1000000) {
+    if (s <= 0.f || !a) return;
+    const float vc = 0.125f;
+    auto inside = [&](float u, float v, float kk) {
+        u /= kk;
+        v = (v - vc) / kk + vc;
+        const float A = u * u + v * v - 1.f;
+        return A * A * A - u * u * v * v * v <= 0.f;
+    };
+    const int x0 = std::max(0, (int)floorf(cx - 1.4f * s)), x1 = std::min(g_w, (int)ceilf(cx + 1.4f * s));
+    const int y0 = std::max(std::max(0, clipT), (int)floorf(cy - 1.5f * s));
+    const int y1 = std::min(std::min(g_h, clipB), (int)ceilf(cy + 1.3f * s));
+    const int N = 4;
+    for (int y = y0; y < y1; y++) {
+        for (int x = x0; x < x1; x++) {
+            int hit = 0, hitIn = 0;
+            for (int sy = 0; sy < N; sy++) {
+                for (int sx = 0; sx < N; sx++) {
+                    const float u = ((float)x + ((float)sx + 0.5f) / N - cx) / s;
+                    const float v = (cy - ((float)y + ((float)sy + 0.5f) / N)) / s;
+                    if (inside(u, v, 1.f)) {
+                        hit++;
+                        if (k > 0.f && inside(u, v, k)) hitIn++;
+                    }
+                }
+            }
+            const int c = hit - hitIn;
+            if (c > 0) BlendPx(px[(size_t)y * g_w + x], R, G, B, (unsigned)(a * c / (N * N)));
+        }
+    }
+}
+
+// скруглённая плитка sz x sz с диагональным градиентом (по вертикали обрезается clipT..clipB)
+static void DrawGradTile(DWORD* px, int x0, int y0, int sz, float rad, unsigned r1, unsigned g1, unsigned b1,
+                         unsigned r2, unsigned g2, unsigned b2, float opacity, int clipT, int clipB) {
+    if (sz <= 0 || opacity <= 0.f) return;
+    for (int y = 0; y < sz; y++) {
+        const int dy = y0 + y;
+        if (dy < 0 || dy >= g_h || dy < clipT || dy >= clipB) continue;
+        for (int x = 0; x < sz; x++) {
+            const int dx = x0 + x;
+            if (dx < 0 || dx >= g_w) continue;
+            const float cov = RRCov(x + 0.5f, y + 0.5f, 0.f, 0.f, (float)sz, (float)sz, rad) * opacity;
+            if (cov <= 0.f) continue;
+            const float t = (float)(x + y) / (2.f * (float)sz);
+            const unsigned R = (unsigned)(r1 + ((float)r2 - (float)r1) * t + 0.5f);
+            const unsigned G = (unsigned)(g1 + ((float)g2 - (float)g1) * t + 0.5f);
+            const unsigned B = (unsigned)(b1 + ((float)b2 - (float)b1) * t + 0.5f);
+            BlendPx(px[(size_t)dy * g_w + dx], R, G, B, (unsigned)(255.f * cov + 0.5f));
+        }
+    }
+}
+
 // обложка cs x cs в точке (cx,cy) со скруглением, билинейным масштабированием и прозрачностью
 static void DrawCover(DWORD* px, int cx, int cy, int cs, float rad, const std::vector<DWORD>& src, int sp,
-                      float opacity) {
+                      float opacity, int clipT = -1000000, int clipB = 1000000) {
     if (cs <= 0 || sp <= 0 || src.empty() || opacity <= 0.f) return;
     const float sc = (float)sp / (float)cs;
     for (int y = 0; y < cs; y++) {
         int dy = cy + y;
-        if (dy < 0 || dy >= g_h) continue;
+        if (dy < 0 || dy >= g_h || dy < clipT || dy >= clipB) continue;
         for (int x = 0; x < cs; x++) {
             int dx = cx + x;
             if (dx < 0 || dx >= g_w) continue;
@@ -2359,6 +5043,37 @@ static void Render(HWND hwnd) {
                    I255(sT) * 40 / 255);
         }
 
+        // имя исполнителя под курсором подчёркивается — по нему можно открыть профиль
+        if (OwnMode() && g_haveCur && g_hotT[15] > 0.01 && g_artHover >= 0) {
+            std::vector<std::pair<int, int>> sp;
+            ArtistSpans(L, sp);
+            if (g_artHover < (int)sp.size() && sp[(size_t)g_artHover].second > sp[(size_t)g_artHover].first) {
+                const RECT ra2 = T(L.artist, sT);
+                const float uy = (float)ra2.bottom - (float)S(2);
+                FillRR(px, (float)(g_oxE + sp[(size_t)g_artHover].first), uy,
+                       (float)(g_oxE + sp[(size_t)g_artHover].second), uy + (float)std::max(1, S(1)), 0.f, tR, tG, tB,
+                       (unsigned)(200.0 * g_hotT[15] * sT));
+            }
+        }
+
+        // плашка «Моя волна» (или «Волна по треку»): понятно, что сейчас играет именно волна
+        if (SourcePillOn() && L.wavePill.right > L.wavePill.left) {
+            const RECT wp = T(L.wavePill, sT);
+            const float ph = (float)(wp.bottom - wp.top);
+            FillRR(px, (float)wp.left, (float)wp.top, (float)wp.right, (float)wp.bottom, ph / 2.f, aR, aG, aB,
+                   (unsigned)(I255(sT) * 0.34));
+            // три «столбика эквалайзера»; на паузе — одинаковой высоты
+            const float bw = (float)std::max(2, S(2)), bg = (float)S(2), bx0 = (float)wp.left + (float)S(9);
+            const float hs[3] = {0.45f, 0.85f, 0.6f};
+            const float maxH = ph * 0.55f, cyb = ph * 0.5f + (float)wp.top;
+            for (int i = 0; i < 3; i++) {
+                const float k = g_playing ? hs[i] : 0.5f;
+                const float bh = maxH * k;
+                FillRR(px, bx0 + i * (bw + bg), cyb - bh / 2.f, bx0 + i * (bw + bg) + bw, cyb + bh / 2.f, bw / 2.f,
+                       tR, tG, tB, (unsigned)(I255(sT) * 0.9));
+            }
+        }
+
         // шкала воспроизведения: при наведении/перетаскивании утолщается, ползунок растёт
         {
             const unsigned fa = I255(sB);
@@ -2436,15 +5151,22 @@ static void Render(HWND hwnd) {
 
     // ---- панель текста песни (фон) и кнопка её открытия
     const double lyGeo = Smooth01(g_lyT);
-    const double lyFade = Smooth01((g_lyT - 0.25) / 0.75) * stage(0.10);
+    const double libGeo = Smooth01(g_libT);
+    // содержимое двух панелей не рисуется одновременно: открытая «забирает» место, закрывающаяся гаснет
+    const double lyFade = Smooth01((g_lyT - 0.25) / 0.75) * stage(0.10) * (g_libOpen ? 0.0 : 1.0);
+    const double libFade =
+        OwnMode() ? Smooth01((g_libT - 0.25) / 0.75) * stage(0.10) * (g_lyOpen ? 0.0 : 1.0) : 0.0;
+    const double bgFade = std::max(Smooth01((g_lyT - 0.25) / 0.75), Smooth01((g_libT - 0.25) / 0.75)) * stage(0.10);
     RECT lp = L.lyrics;
     OffsetRect(&lp, g_oxE, g_oyE);
-    const bool lyVisible = showExp && (lp.bottom - lp.top) > 2;
+    const bool panelVisible = showExp && (lp.bottom - lp.top) > 2;
+    const bool lyVisible = panelVisible && !g_libOpen;
+    const bool libOn = panelVisible && libFade > 0.003;
     if (showExp) {
         const unsigned tR = U8(P.text.r), tG = U8(P.text.g), tB = U8(P.text.b);
-        if (lyVisible)
+        if (panelVisible)
             FillRR(px, (float)lp.left, (float)lp.top, (float)lp.right, (float)lp.bottom, (float)S(14), 0, 0, 0,
-                   (unsigned)I255(0.24 * lyFade));
+                   (unsigned)I255(0.24 * bgFade));
         const unsigned fa = I255(stage(0.30));
         RECT b = T(L.lyBtn, stage(0.30));
         float cx = (b.left + b.right) * 0.5f, cy = (b.top + b.bottom) * 0.5f;
@@ -2465,6 +5187,134 @@ static void Render(HWND hwnd) {
         for (int k = 0; k < 3; k++) {
             float yy = cy + (k - 1) * sp;
             FillRR(px, x0, yy - th * 0.5f, x0 + lw * ws[k], yy + th * 0.5f, th * 0.5f, U8(ic.r), U8(ic.g), U8(ic.b), fa);
+        }
+
+        if (L.libBtn.right > L.libBtn.left) {  // кнопка библиотеки: фон подсвечивается при наведении и пока панель открыта
+            RECT b2 = T(L.libBtn, stage(0.30));
+            float a2 = 0.06f + (float)(g_hotT[9] * 0.10 + g_pressT[6] * 0.12) + (float)libGeo * 0.16f;
+            FillRR(px, (float)b2.left, (float)b2.top, (float)b2.right, (float)b2.bottom, (float)S(10), tR, tG, tB,
+                   (unsigned)(fa * std::min(a2, 1.f)));
+        }
+        if (L.like.right > L.like.left) {  // сердечко «нравится»: два круга и треугольник одним цветом
+            RECT b3 = T(L.like, sT);
+            const unsigned fa3 = (unsigned)I255(sT);
+            const float cx3 = (b3.left + b3.right) * 0.5f, cy3 = (b3.top + b3.bottom) * 0.5f;
+            const float r3 = (b3.right - b3.left) * 0.5f;
+            const float ha = (float)(g_hotT[10] * 0.07 + g_pressT[7] * 0.09);
+            FillRR(px, cx3 - r3, cy3 - r3, cx3 + r3, cy3 + r3, r3, tR, tG, tB, (unsigned)(fa3 * ha));
+            const bool liked = g_haveCur && IsLiked(g_cur.id);
+            const float w = r3 * 0.5f * (1.f - 0.08f * (float)g_pressT[7]);
+            if (liked) {  // лайкнут — сердечко залито цветом акцента
+                const float rr = w * 0.54f, hy = cy3 - w * 0.06f;
+                const unsigned hR = U8(P.accent.r), hG = U8(P.accent.g), hB = U8(P.accent.b);
+                FillRR(px, cx3 - w * 0.5f - rr, hy - w * 0.28f - rr, cx3 - w * 0.5f + rr, hy - w * 0.28f + rr, rr, hR, hG, hB, fa3);
+                FillRR(px, cx3 + w * 0.5f - rr, hy - w * 0.28f - rr, cx3 + w * 0.5f + rr, hy - w * 0.28f + rr, rr, hR, hG, hB, fa3);
+                FillTri(px, cx3 - w, hy - w * 0.12f, cx3 + w, hy - w * 0.12f, cx3, hy + w * 0.95f, hR, hG, hB, fa3);
+            } else {  // не лайкнут — пустое сердечко (только контур)
+                const float sc = w * 0.9f;
+                const float oy = cy3 + 0.125f * sc;  // центр сердечка — в центре кнопки
+                DrawHeart(px, cx3, oy, sc, 0.70f, tR, tG, tB, (unsigned)(fa3 * 0.95f));
+            }
+        }
+    }
+
+    // ---- библиотека (поиск и плейлисты): фигуры
+    LibLay LY = {};
+    if (libOn) {
+        LY = CalcLibLay(lp, L.libFull);
+        const unsigned tR = U8(P.text.r), tG = U8(P.text.g), tB = U8(P.text.b);
+        const unsigned aR = U8(P.accent.r), aG = U8(P.accent.g), aB = U8(P.accent.b);
+        const unsigned fa = (unsigned)I255(libFade);
+        // всё, что выходит за пределы растущей панели, обрезается по вертикали
+        auto Box = [&](const RECT& r0, float rad, unsigned R, unsigned G, unsigned B, double alpha) {
+            RECT r = r0;
+            r.top = std::max(r.top, lp.top);
+            r.bottom = std::min(r.bottom, lp.bottom);
+            if (r.bottom <= r.top) return;
+            FillRR(px, (float)r.left, (float)r.top, (float)r.right, (float)r.bottom, rad, R, G, B,
+                   (unsigned)(fa * std::clamp(alpha, 0.0, 1.0)));
+        };
+        Box(LY.search, (float)S(10), tR, tG, tB, 0.10 + 0.08 * g_hotT[11] + (g_searchActive ? 0.10 : 0.0));
+        Box(LY.wave, (float)S(10), aR, aG, aB,
+            0.30 + 0.22 * g_hotT[12] + (g_pmode == PM_WAVE && g_waveSeed.empty() ? 0.30 : 0.0));
+        Box(LY.tune, (float)S(10), tR, tG, tB, 0.10 + 0.08 * g_hotT[16] + (g_libMode == 3 ? 0.18 : 0.0));
+        Box(LY.shake, (float)S(10), tR, tG, tB, 0.10 + 0.08 * g_hotT[17]);
+        Box(LY.tabA, (float)S(8), tR, tG, tB, 0.07 + 0.10 * g_hotT[13] + (g_libMode == 0 ? 0.12 : 0.0));
+        if (g_libMode == 2) Box(LY.tabB, (float)S(8), aR, aG, aB, 0.30 + 0.22 * g_hotT[14]);
+        else Box(LY.tabB, (float)S(8), tR, tG, tB, 0.07 + 0.10 * g_hotT[14] + (g_libMode == 1 ? 0.12 : 0.0));
+
+        g_libScroll = std::clamp(g_libScroll, 0.0, LibMaxScroll(LY));
+        RECT lc = LY.list;
+        lc.top = std::max(lc.top, lp.top);
+        lc.bottom = std::min(lc.bottom, lp.bottom);
+        if (lc.bottom > lc.top && g_libMode == 3) {  // настройки «Моей волны»: «чипы» опций
+            const WaveLay WL = CalcWaveLay(LY);
+            const int ox = (int)LY.list.left, oy = (int)LY.list.top - (int)std::lround(g_libScroll);
+            for (size_t i = 0; i < WL.chips.size(); i++) {
+                RECT r = WL.chips[i].r;
+                OffsetRect(&r, ox, oy);
+                if (r.bottom <= lc.top || r.top >= lc.bottom) continue;
+                const bool sel = g_wCfg[WL.chips[i].g] == kWaveGroups[WL.chips[i].g].opts[WL.chips[i].o].id;
+                const bool hov = (int)i == g_libHover;
+                const double a = sel ? 0.34 + (hov ? 0.08 : 0.0) : 0.08 + (hov ? 0.10 : 0.0);
+                FillRR(px, (float)r.left, (float)std::max(r.top, lc.top), (float)r.right,
+                       (float)std::min(r.bottom, lc.bottom), (float)(r.bottom - r.top) / 2.f, sel ? aR : tR,
+                       sel ? aG : tG, sel ? aB : tB, (unsigned)(fa * a));
+            }
+            const double ms = LibMaxScroll(LY);
+            if (ms > 0.0) {
+                const int lh = LY.list.bottom - LY.list.top;
+                const int th = std::max(S(20), (int)(lh * (double)lh / (lh + ms)));
+                const int ty = LY.list.top + (int)((lh - th) * g_libScroll / ms);
+                RECT sb = {LY.list.right - S(3), ty, LY.list.right - S(1), ty + th};
+                Box(sb, (float)S(1), tR, tG, tB, 0.30);
+            }
+        }
+        if (lc.bottom > lc.top && g_libMode != 3 && LibMessage().empty()) {
+            const int n = LibRowCount();
+            const int first = std::max(0, (int)floor(g_libScroll / (double)LY.rowH));
+            for (int i = first; i < n; i++) {
+                const int rt = LY.list.top + i * LY.rowH - (int)std::lround(g_libScroll);
+                if (rt >= lc.bottom) break;
+                const int rb = rt + LY.rowH;
+                if (rb <= lc.top) continue;
+                const YmTrack* rowTr = LibRowTrack(i);
+                const bool cur = g_haveCur && rowTr && rowTr->id == g_cur.id;
+                const double a = (g_libHover == i ? 0.10 : 0.0) + (cur ? 0.16 : 0.0);
+                if (a > 0.0) {
+                    RECT rr = {LY.list.left, std::max((LONG)rt, lc.top), LY.list.right, std::min((LONG)rb, lc.bottom)};
+                    FillRR(px, (float)rr.left, (float)rr.top, (float)rr.right, (float)rr.bottom, (float)S(8),
+                           cur ? aR : tR, cur ? aG : tG, cur ? aB : tB, (unsigned)(fa * a));
+                }
+                {   // миниатюра обложки (пока не загрузилась — тусклая плитка с значком)
+                    const int ts = ThumbSize();
+                    const float thRad = LibRowArtist(i) ? (float)ts / 2.f : (float)S(6);  // исполнители — круглые
+                    const int tx0 = LY.list.left + S(6), ty0 = rt + (LY.rowH - ts) / 2;
+                    if (const Thumb* th = LibThumb(i)) {
+                        DrawCover(px, tx0, ty0, ts, thRad, th->px, th->sz,
+                                  std::clamp((float)libFade, 0.f, 1.f), (int)lc.top, (int)lc.bottom);
+                    } else if (g_libMode == 0 && g_pls[(size_t)i].kind == "liked") {
+                        const float op = std::clamp((float)libFade, 0.f, 1.f);
+                        DrawGradTile(px, tx0, ty0, ts, thRad, 255, 94, 138, 124, 92, 255, op, (int)lc.top, (int)lc.bottom);
+                        const float hs = (float)ts * 0.21f;  // белое сердечко по центру плитки
+                        DrawHeart(px, tx0 + ts * 0.5f, ty0 + ts * 0.5f + 0.125f * hs, hs, 0.f, 255, 255, 255, fa,
+                                  (int)lc.top, (int)lc.bottom);
+                    } else {
+                        RECT tr = {tx0, std::max((LONG)ty0, lc.top), tx0 + ts, std::min((LONG)(ty0 + ts), lc.bottom)};
+                        if (tr.bottom > tr.top)
+                            FillRR(px, (float)tr.left, (float)tr.top, (float)tr.right, (float)tr.bottom, thRad,
+                                   tR, tG, tB, (unsigned)(fa * 0.10));
+                    }
+                }
+            }
+            const double ms = LibMaxScroll(LY);  // тонкая полоса прокрутки справа
+            if (ms > 0.0) {
+                const int lh = LY.list.bottom - LY.list.top;
+                const int th = std::max(S(20), (int)(lh * (double)lh / (lh + ms)));
+                const int ty = LY.list.top + (int)((lh - th) * g_libScroll / ms);
+                RECT sb = {LY.list.right - S(3), ty, LY.list.right - S(1), ty + th};
+                Box(sb, (float)S(1), tR, tG, tB, 0.30);
+            }
         }
     }
 
@@ -2488,7 +5338,10 @@ static void Render(HWND hwnd) {
             SelectObject(mm, old);
             return (int)sz.cx;
         };
-        int textW = std::max(measure(fTitle, g_title), measure(fArtist, g_artist));
+        const std::wstring artistLine = (SourcePillOn() && g_haveCur)
+                                            ? WavePillLabel() + L" \u00B7 " + g_artist
+                                            : g_artist;
+        int textW = std::max(measure(fTitle, g_title), measure(fArtist, artistLine));
 
         // блок кнопок «приклеен» к тексту, но не выходит за край компактного виджета
         int maxTextW = std::max(0, g_oxC + g_wc - pad - textLeft - 3 * CellW() - gap);
@@ -2503,7 +5356,7 @@ static void Render(HWND hwnd) {
         RECT r1 = {textLeft + tdx, top, textRight + tdx, top + lineH1};
         RECT r2 = {textLeft + tdx, top + lineH1, textRight + tdx, top + lineH1 + lineH2};
         DrawTextRect(mm, fTitle, RGB(I255(tt), 0, 0), g_title.c_str(), r1, DT_END_ELLIPSIS | DT_VCENTER);
-        DrawTextRect(mm, fArtist, RGB(0, I255(tt * 170.0 / 255.0), 0), g_artist.c_str(), r2,
+        DrawTextRect(mm, fArtist, RGB(0, I255(tt * 170.0 / 255.0), 0), artistLine.c_str(), r2,
                      DT_END_ELLIPSIS | DT_VCENTER);
 
         // кнопки: fade-in + выезд слева направо, с небольшой задержкой для каждой
@@ -2549,6 +5402,11 @@ static void Render(HWND hwnd) {
         OffsetRect(&ra, tdx, 0);
         DrawTextRect(mm, fT, RGB(I255(sT * tt), 0, 0), g_title.c_str(), rt, DT_END_ELLIPSIS | DT_VCENTER);
         DrawTextRect(mm, fA, RGB(0, I255(sT * tt), 0), g_artist.c_str(), ra, DT_END_ELLIPSIS | DT_VCENTER);
+        if (SourcePillOn() && L.wavePill.right > L.wavePill.left) {
+            RECT wr = T(L.wavePill, sT);
+            wr.left += S(24);
+            DrawTextRect(mm, fTm, RGB(I255(sT), 0, 0), WavePillLabel().c_str(), wr, DT_LEFT | DT_VCENTER | DT_END_ELLIPSIS);
+        }
         DrawTextRect(mm, fTm, RGB(0, I255(sB), 0), FmtTime(posShown).c_str(), T(L.tCur, sB), DT_LEFT | DT_VCENTER);
         if (dur > 0)
             DrawTextRect(mm, fTm, RGB(0, I255(sB), 0), FmtTime(dur).c_str(), T(L.tTot, sB), DT_RIGHT | DT_VCENTER);
@@ -2556,6 +5414,8 @@ static void Render(HWND hwnd) {
         DrawTextRect(mm, fIc, RGB(0, 0, I255(sC)), L"\uE101", T(L.next, sC), DT_CENTER | DT_VCENTER);
         DrawTextRect(mm, fVi, RGB(0, 0, I255(sV)), (g_muted || g_vol <= 0.001f) ? L"\uE74F" : L"\uE767",
                      T(L.volIcon, sV), DT_CENTER | DT_VCENTER);
+        if (L.libBtn.right > L.libBtn.left)
+            DrawTextRect(mm, fIc, RGB(0, 0, I255(sC)), L"\uE8F1", T(L.libBtn, sC), DT_CENTER | DT_VCENTER);
 
         if (lyVisible) {  // строки текста: яркость зависит от близости к текущей строке
             HFONT fL = MkFont(S(g_set.fontSize + 3), FW_SEMIBOLD, L"Segoe UI");
@@ -2682,6 +5542,161 @@ static void Render(HWND hwnd) {
                 DrawTextRect(mm, fVi, RGB(0, 0, I255(lyFade * (0.55 + 0.45 * g_hotT[8]))), L"\uE946", c,
                              DT_CENTER | DT_VCENTER);
             }
+        }
+
+        if (libOn) {  // библиотека: поиск, «Моя волна», вкладки, список
+            HFONT fRT = MkFont(S(std::max(10, g_set.fontSize - 1)), FW_SEMIBOLD, L"Segoe UI");
+            HFONT fRA = MkFont(S(std::max(9, g_set.fontSize - 3)), FW_NORMAL, L"Segoe UI");
+            HFONT fTab = MkFont(S(std::max(9, g_set.fontSize - 2)), FW_SEMIBOLD, L"Segoe UI");
+            const int fa = I255(libFade);
+            HRGN rg = CreateRectRgn(lp.left, lp.top, lp.right, lp.bottom);
+            SelectClipRgn(mm, rg);
+
+            {   // поле поиска: значок лупы + запрос (или подсказка)
+                RECT ic = LY.search;
+                ic.right = ic.left + S(32);
+                DrawTextRect(mm, fVi, RGB(0, 0, (int)(fa * 0.8)), L"\uE721", ic, DT_CENTER | DT_VCENTER);
+                RECT tx = LY.search;
+                tx.left += S(32);
+                tx.right -= S(8);
+                const std::wstring& shown = g_searchActive ? g_searchText : g_libQuery;
+                int off = 0, caretX = 0;
+                if (g_searchActive && !shown.empty()) {  // длинный запрос «уезжает» влево, чтобы курсор был виден
+                    HGDIOBJ of = SelectObject(mm, fTab);
+                    SIZE sz = {};
+                    GetTextExtentPoint32W(mm, shown.c_str(), std::clamp(g_searchCaret, 0, (int)shown.size()), &sz);
+                    SelectObject(mm, of);
+                    caretX = sz.cx;
+                    const int avail = std::max(1, (int)(tx.right - tx.left) - S(3));
+                    if (caretX > avail) off = caretX - avail;
+                }
+                HRGN rgf = CreateRectRgn(tx.left, std::max(tx.top, lp.top), tx.right, std::min(tx.bottom, lp.bottom));
+                SelectClipRgn(mm, rgf);
+                if (shown.empty()) {
+                    DrawTextRect(mm, fTab, RGB(0, (int)(fa * 0.6), 0),
+                                 g_searchActive ? L"Введите запрос…" : L"Поиск…", tx,
+                                 DT_LEFT | DT_VCENTER | DT_END_ELLIPSIS);
+                } else if (g_searchActive) {
+                    RECT t2 = tx;
+                    t2.left -= off;
+                    t2.right = t2.left + 20000;  // без обрезки и многоточия
+                    DrawTextRect(mm, fTab, RGB(fa, 0, 0), shown.c_str(), t2, DT_LEFT | DT_VCENTER);
+                } else {
+                    DrawTextRect(mm, fTab, RGB(fa, 0, 0), shown.c_str(), tx, DT_LEFT | DT_VCENTER | DT_END_ELLIPSIS);
+                }
+                if (g_searchActive && ((GetTickCount64() / 500) & 1) == 0) {  // мигающий курсор
+                    const int caretH = S(std::max(9, g_set.fontSize - 2)) + S(4);
+                    const int caretL = tx.left - off + caretX;
+                    const int caretT = (int)(LY.search.top + LY.search.bottom - caretH) / 2;
+                    RECT cr = {caretL, caretT, caretL + std::max(1, S(1)), caretT + caretH};
+                    HBRUSH hb = CreateSolidBrush(RGB(fa, 0, 0));
+                    FillRect(mm, &cr, hb);
+                    DeleteObject(hb);
+                }
+                SelectClipRgn(mm, rg);
+                DeleteObject(rgf);
+            }
+            DrawTextRect(mm, fTab, RGB(fa, 0, 0), L"Моя волна", LY.wave, DT_CENTER | DT_VCENTER);
+            DrawTextRect(mm, fVi, RGB(0, 0, (int)(fa * 0.9)), L"", LY.tune, DT_CENTER | DT_VCENTER);   // настройки волны
+            DrawTextRect(mm, fVi, RGB(0, 0, (int)(fa * 0.9)), L"", LY.shake, DT_CENTER | DT_VCENTER);  // встряхнуть
+            DrawTextRect(mm, fTab, RGB(g_libMode == 0 ? fa : (int)(fa * 0.8), 0, 0),
+                         g_libMode == 0 ? L"Плейлисты" : (g_libMode == 2 && g_libBack == 1) ? L"\u2039 Поиск" : L"\u2039 Плейлисты", LY.tabA, DT_CENTER | DT_VCENTER);
+            DrawTextRect(mm, fTab, RGB(g_libMode == 1 || g_libMode == 2 ? fa : (int)(fa * 0.8), 0, 0),
+                         g_libMode == 2 ? L"Играть всё" : L"Поиск", LY.tabB, DT_CENTER | DT_VCENTER);
+            {
+                const std::wstring wavT = L"Настройки волны";
+                const std::wstring& tt2 = g_libMode == 1 ? g_libQuery : g_libMode == 2 ? g_plTitle : g_libMode == 3 ? wavT : std::wstring();
+                if (!tt2.empty())
+                    DrawTextRect(mm, fRA, RGB(0, (int)(fa * 0.75), 0), tt2.c_str(), LY.title,
+                                 DT_LEFT | DT_VCENTER | DT_END_ELLIPSIS);
+            }
+
+            // список: сообщение (загрузка/ошибка/пусто) или строки
+            RECT lc = LY.list;
+            lc.top = std::max(lc.top, lp.top);
+            lc.bottom = std::min(lc.bottom, lp.bottom);
+            if (lc.bottom > lc.top) {
+                HRGN rg2 = CreateRectRgn(lc.left, lc.top, lc.right, lc.bottom);
+                SelectClipRgn(mm, rg2);
+                const std::wstring msg = LibMessage();
+                if (g_libMode == 3) {  // настройки «Моей волны»: подписи групп и опций
+                    const WaveLay WL = CalcWaveLay(LY);
+                    const int ox = (int)LY.list.left, oy = (int)LY.list.top - (int)std::lround(g_libScroll);
+                    if (g_pmode != PM_WAVE) {
+                        RECT nr = {LY.list.left + S(6), oy + WL.noteY, LY.list.right - S(8), oy + WL.noteY + S(16)};
+                        DrawTextRect(mm, fRA, RGB(0, (int)(fa * 0.6), 0), L"Применится при запуске «Моей волны»", nr,
+                                     DT_LEFT | DT_VCENTER | DT_END_ELLIPSIS);
+                    }
+                    for (int g = 0; g < 4; g++) {
+                        RECT lr = {LY.list.left + S(6), oy + WL.labelY[g], LY.list.right - S(8),
+                                   oy + WL.labelY[g] + WL.labelH};
+                        DrawTextRect(mm, fRA, RGB(0, (int)(fa * 0.75), 0), kWaveGroups[g].title, lr,
+                                     DT_LEFT | DT_VCENTER | DT_END_ELLIPSIS);
+                    }
+                    for (size_t i = 0; i < WL.chips.size(); i++) {
+                        RECT r = WL.chips[i].r;
+                        OffsetRect(&r, ox, oy);
+                        if (r.bottom <= lc.top || r.top >= lc.bottom) continue;
+                        const bool sel = g_wCfg[WL.chips[i].g] == kWaveGroups[WL.chips[i].g].opts[WL.chips[i].o].id;
+                        DrawTextRect(mm, fTab, sel ? RGB(fa, 0, 0) : RGB(0, (int)(fa * 0.9), 0),
+                                     kWaveGroups[WL.chips[i].g].opts[WL.chips[i].o].label, r, DT_CENTER | DT_VCENTER);
+                    }
+                } else if (!msg.empty()) {
+                    HGDIOBJ oldF = SelectObject(mm, fTab);
+                    SetTextColor(mm, RGB(0, (int)(fa * 0.8), 0));
+                    RECT mr = {LY.list.left + S(10), LY.list.top + S(10), LY.list.right - S(10), LY.list.bottom};
+                    DrawTextW(mm, msg.c_str(), -1, &mr, DT_WORDBREAK | DT_NOPREFIX | DT_CENTER);
+                    SelectObject(mm, oldF);
+                } else {
+                    const int n = LibRowCount();
+                    const int lh1 = S(std::max(10, g_set.fontSize - 1)) + S(4), lh2 = S(std::max(9, g_set.fontSize - 3)) + S(3);
+                    const int first = std::max(0, (int)floor(g_libScroll / (double)LY.rowH));
+                    for (int i = first; i < n; i++) {
+                        const int rt = LY.list.top + i * LY.rowH - (int)std::lround(g_libScroll);
+                        if (rt >= lc.bottom) break;
+                        const int rb = rt + LY.rowH;
+                        if (rb <= lc.top) continue;
+                        std::wstring t1, t2, t3;
+                        if (g_libMode == 0) {
+                            t1 = g_pls[(size_t)i].title;
+                            if (g_pls[(size_t)i].count > 0) t2 = std::to_wstring(g_pls[(size_t)i].count) + L" тр.";
+                        } else if (const YmArtist* ar = LibRowArtist(i)) {
+                            t1 = ar->name;
+                            t2 = L"Исполнитель";
+                        } else if (const YmTrack* tk = LibRowTrack(i)) {
+                            t1 = tk->title;
+                            t2 = tk->artists;
+                            t3 = FmtTime(tk->durMs * 10000LL);
+                        }
+                        int right = LY.list.right - S(8);
+                        if (!t3.empty()) {
+                            RECT r3 = {right - S(44), rt, right, rb};
+                            DrawTextRect(mm, fRA, RGB(0, (int)(fa * 0.7), 0), t3.c_str(), r3, DT_RIGHT | DT_VCENTER);
+                            right -= S(48);
+                        }
+                        const int ty = rt + (LY.rowH - lh1 - lh2) / 2;
+                        const int tl = LY.list.left + S(6) + ThumbSize() + S(8);  // справа от миниатюры
+                        if (!LibThumb(i) && !(g_libMode == 0 && g_pls[(size_t)i].kind == "liked")) {  // заглушка вместо обложки: значок
+                            const int ts = ThumbSize();
+                            RECT gr = {LY.list.left + S(6), rt + (LY.rowH - ts) / 2, LY.list.left + S(6) + ts,
+                                       rt + (LY.rowH - ts) / 2 + ts};
+                            const bool heart = g_libMode == 0 && g_pls[(size_t)i].kind == "liked";
+                            DrawTextRect(mm, fVi, RGB(0, 0, (int)(fa * 0.55)), heart ? L"\uEB51" : LibRowArtist(i) ? L"\uE77B" : (g_libMode == 0 && !g_pls[(size_t)i].uid.empty()) ? L"\uE787" : L"\uE8D6", gr,
+                                         DT_CENTER | DT_VCENTER);
+                        }
+                        RECT r1 = {tl, ty, right, ty + lh1};
+                        RECT r2 = {tl, ty + lh1, right, ty + lh1 + lh2};
+                        DrawTextRect(mm, fRT, RGB(fa, 0, 0), t1.c_str(), r1, DT_LEFT | DT_VCENTER | DT_END_ELLIPSIS);
+                        if (!t2.empty())
+                            DrawTextRect(mm, fRA, RGB(0, (int)(fa * 0.75), 0), t2.c_str(), r2,
+                                         DT_LEFT | DT_VCENTER | DT_END_ELLIPSIS);
+                    }
+                }
+                SelectClipRgn(mm, nullptr);
+                DeleteObject(rg2);
+            }
+            SelectClipRgn(mm, nullptr);
+            DeleteObject(rg);
         }
 
         const Rgb* cs3[3] = {&P.text, &P.text2, &P.text};
@@ -2825,7 +5840,8 @@ static void Present(HWND h, bool redraw) {
     bool moved = cur.left != g_x || cur.top != g_y || cur.right - cur.left != g_w ||
                  cur.bottom - cur.top != g_h;
     // GW_HWNDPREV != null — над нами оказалось другое окно (чаще всего сама панель задач)
-    if (wasHidden || moved || GetWindow(h, GW_HWNDPREV))
+    // пока открыто контекстное меню трека, наверх не поднимаемся — иначе виджет закроет само меню
+    if (wasHidden || moved || (!g_menuOpen && GetWindow(h, GW_HWNDPREV)))
         SetWindowPos(h, HWND_TOPMOST, g_x, g_y, g_w, g_h, SWP_NOACTIVATE);
     if (redraw || wasHidden || moved) Render(h);
 }
@@ -2856,8 +5872,11 @@ static void OnLeave(HWND h) {
     g_btn = 0;
     g_hot = 0;
     g_pressed = 0;
+    g_libHover = -1;
     StartAnim(h);
+    if (g_menuOpen) return;
     if (!g_expand || g_set.collapseMode == 2) return;
+    if (g_searchActive) return;  // пока идёт ввод запроса, плеер не сворачиваем
     if (g_set.collapseMode == 0 || g_set.collapseDelay == 0) {
         g_expand = false;  // сворачиваем сразу
         StartAnim(h);
@@ -2910,7 +5929,27 @@ static LRESULT CALLBACK WndProc(HWND h, UINT m, WPARAM w, LPARAM l) {
                 hot = In(L.prev, fx, fy) ? 1 : In(L.play, fx, fy) ? 2 : In(L.next, fx, fy) ? 3
                     : In(L.volIcon, fx, fy) ? 4 : (In(L.barHit, fx, fy) && g_durTicks > 0) ? 5
                     : In(L.volHit, fx, fy) ? 6 : In(L.lyBtn, fx, fy) ? 7
-                    : (g_lyOpen && In(L.lyChk, fx, fy)) ? 8 : 0;
+                    : (g_lyOpen && In(L.lyChk, fx, fy)) ? 8
+                    : In(L.libBtn, fx, fy) ? 9 : In(L.like, fx, fy) ? 10 : 0;
+                int hov = -1;
+                if (g_libOpen && In(L.lyrics, fx, fy)) {  // внутри панели библиотеки
+                    const LibLay Y = CalcLibLay(L.lyrics, L.libFull);
+                    if (hot == 0)
+                        hot = In(Y.search, fx, fy) ? 11 : In(Y.wave, fx, fy) ? 12 : In(Y.tabA, fx, fy) ? 13
+                              : In(Y.tabB, fx, fy) ? 14 : In(Y.tune, fx, fy) ? 16 : In(Y.shake, fx, fy) ? 17 : 0;
+                    hov = g_libMode == 3 ? WaveChipAt(Y, fx, fy) : LibRowAt(Y, fx, fy);  // в настройках волны — индекс чипа
+                }
+                if (hot == 0 && OwnMode() && g_haveCur && In(L.artist, fx, fy)) {  // имя исполнителя — кликабельно
+                    const int ai = ArtistAtX(L, fx);
+                    if (ai >= 0) {
+                        g_artHover = ai;  // не сбрасываем при уходе — подчёркивание плавно гаснет
+                        hot = 15;
+                    }
+                }
+                if (hov != g_libHover) {
+                    g_libHover = hov;
+                    StartAnim(h);
+                }
             }
             if (hot != g_hot) {
                 g_hot = hot;
@@ -2918,6 +5957,12 @@ static LRESULT CALLBACK WndProc(HWND h, UINT m, WPARAM w, LPARAM l) {
             }
             return 0;
         }
+        case WM_SETCURSOR:
+            if (LOWORD(l) == HTCLIENT && ExpMode() && (g_hot == 15 || (g_hot >= 12 && g_hot <= 14) || g_hot == 16 || g_hot == 17)) {
+                SetCursor(LoadCursorW(nullptr, IDC_HAND));
+                return TRUE;
+            }
+            break;
         case WM_MOUSELEAVE:
             if (g_drag) return 0;  // во время перетаскивания уход курсора не считаем
             OnLeave(h);
@@ -2934,7 +5979,8 @@ static LRESULT CALLBACK WndProc(HWND h, UINT m, WPARAM w, LPARAM l) {
                 UpdateDrag(h, GET_X_LPARAM(l));
             } else {
                 g_pressed = In(L.prev, fx, fy) ? 1 : In(L.play, fx, fy) ? 2 : In(L.next, fx, fy) ? 3
-                          : In(L.volIcon, fx, fy) ? 4 : In(L.lyBtn, fx, fy) ? 5 : 0;
+                          : In(L.volIcon, fx, fy) ? 4 : In(L.lyBtn, fx, fy) ? 5
+                          : In(L.libBtn, fx, fy) ? 6 : In(L.like, fx, fy) ? 7 : 0;
             }
             StartAnim(h);
             return 0;
@@ -2969,6 +6015,10 @@ static LRESULT CALLBACK WndProc(HWND h, UINT m, WPARAM w, LPARAM l) {
             if (ExpMode()) {
                 ExpLay L = CalcExpLay();
                 int fx = GET_X_LPARAM(l) - g_oxE, fy = GET_Y_LPARAM(l) - g_oyE;
+                if (g_searchActive) {  // клик не по полю поиска — ввод закончен
+                    const LibLay Y0 = CalcLibLay(L.lyrics, L.libFull);
+                    if (!(g_libOpen && In(Y0.search, fx, fy))) SearchEnd(false);
+                }
                 int b = In(L.prev, fx, fy) ? 1 : In(L.play, fx, fy) ? 2 : In(L.next, fx, fy) ? 3 : 0;
                 if (b) {
                     DoMediaCommand(b);
@@ -2977,10 +6027,22 @@ static LRESULT CALLBACK WndProc(HWND h, UINT m, WPARAM w, LPARAM l) {
                     g_lyOpen = !g_lyOpen;
                     if (!g_lyOpen) g_diagShow = false;
                     if (g_lyOpen) {
+                        if (g_libOpen) {  // панели делят одно место
+                            g_libOpen = false;
+                            CloseSearchPopup();
+                        }
                         if (g_lyState == 3) g_lyKey.clear();  // прошлая попытка не удалась — пробуем ещё раз
                         LyEnsure();
                     }
                     StartAnim(h);
+                } else if (In(L.libBtn, fx, fy)) {  // показать/скрыть библиотеку (поиск и плейлисты)
+                    ToggleLibrary(h);
+                    if (!g_libOpen) CloseSearchPopup();
+                } else if (In(L.like, fx, fy)) {  // «нравится»
+                    OwnToggleLike();
+                    Render(h);
+                } else if (g_libOpen && In(L.lyrics, fx, fy)) {  // клик внутри библиотеки
+                    LibClick(h, L, fx, fy);
                 } else if (g_lyOpen && In(L.lyChk, fx, fy)) {  // «i» — проверка токенов
                     ToggleCheck(h);
                 } else if (g_lyOpen && !g_diagShow && g_lySynced && g_lyState == 2 && In(L.lyrics, fx, fy)) {
@@ -2999,8 +6061,10 @@ static LRESULT CALLBACK WndProc(HWND h, UINT m, WPARAM w, LPARAM l) {
                     g_muted = !g_muted;
                     ApplyVolume(true);
                     Render(h);
+                } else if (OwnMode() && g_haveCur && In(L.artist, fx, fy) && ArtistAtX(L, fx) >= 0) {
+                    OpenArtistFromPlayer(h, ArtistAtX(L, fx));  // профиль исполнителя
                 } else if (In(L.cover, fx, fy) || In(L.title, fx, fy) || In(L.artist, fx, fy)) {
-                    ToggleApp();
+                    if (!OwnMode()) ToggleApp();  // во встроенном режиме приложение не открываем
                 }
                 return 0;
             }
@@ -3008,19 +6072,44 @@ static LRESULT CALLBACK WndProc(HWND h, UINT m, WPARAM w, LPARAM l) {
             if (b) {
                 DoMediaCommand(b);
                 SetTimer(h, 2, 300, nullptr);
+            } else if (OwnMode()) {
+                SetExpanded(h, true);  // встроенный плеер: ЛКМ разворачивает виджет
             } else {
                 ToggleApp();
             }
             return 0;
         }
-        case WM_RBUTTONUP:  // ПКМ — развернуть/свернуть плеер
+        case WM_RBUTTONUP: {  // ПКМ по треку — меню; в остальных местах — развернуть/свернуть плеер
+            if (ExpMode() && OwnMode() && !g_drag) {
+                ExpLay L = CalcExpLay();
+                const int fx = GET_X_LPARAM(l) - g_oxE, fy = GET_Y_LPARAM(l) - g_oyE;
+                if (g_libOpen && In(L.lyrics, fx, fy)) {  // строка трека в библиотеке
+                    const LibLay Y = CalcLibLay(L.lyrics, L.libFull);
+                    const int row = g_libMode == 3 ? -1 : LibRowAt(Y, fx, fy);
+                    if (const YmTrack* t = LibRowTrack(row)) {
+                        ShowTrackMenu(h, *t);
+                        return 0;
+                    }
+                } else if (g_haveCur && (In(L.cover, fx, fy) || In(L.title, fx, fy) || In(L.artist, fx, fy) ||
+                                         In(L.wavePill, fx, fy))) {  // текущий трек
+                    ShowTrackMenu(h, g_cur);
+                    return 0;
+                }
+            }
             SetExpanded(h, !g_expand);
             return 0;
+        }
         case WM_MOUSEWHEEL:  // колесо: над панелью текста — прокрутка, иначе громкость приложения
             if (ExpMode() && !g_drag) {
                 POINT wp = {GET_X_LPARAM(l), GET_Y_LPARAM(l)};
                 ScreenToClient(h, &wp);
                 ExpLay L = CalcExpLay();
+                if (g_libOpen && In(L.lyrics, wp.x - g_oxE, wp.y - g_oyE)) {  // прокрутка списка библиотеки
+                    const LibLay Y = CalcLibLay(L.lyrics, L.libFull);
+                    g_libScroll = std::clamp(g_libScroll - GET_WHEEL_DELTA_WPARAM(w) / 120.0 * S(44), 0.0, LibMaxScroll(Y));
+                    StartAnim(h);
+                    return 0;
+                }
                 if (g_lyOpen && In(L.lyrics, wp.x - g_oxE, wp.y - g_oyE)) {
                     g_lyManual += GET_WHEEL_DELTA_WPARAM(w) / 120.0 * S(44);
                     if (g_lySynced) g_lyManualUntil = GetTickCount64() + 3000;
@@ -3042,6 +6131,17 @@ static LRESULT CALLBACK WndProc(HWND h, UINT m, WPARAM w, LPARAM l) {
         case WM_TIMER:
             if (w == 5) {  // страховка: быстро возвращаем виджет наверх / показываем после fullscreen
                 Present(h, false);
+                if (g_libOpen) LibRequestThumbs();  // подгружаем миниатюры видимых строк
+                if (g_searchActive) {  // страховки: перехват клавиатуры не должен «залипнуть»
+                    if (!IsWindowVisible(h) || !g_expand || !g_libOpen ||
+                        GetTickCount64() - g_searchLastKey > 90000) {
+                        SearchEnd(false);
+                    } else if (GetAsyncKeyState(VK_LBUTTON) & 0x8000) {  // клик в другом месте экрана
+                        POINT pt;
+                        GetCursorPos(&pt);
+                        if (!PtInRect(&g_searchScr, pt)) SearchEnd(false);
+                    }
+                }
                 return 0;
             }
             if (w == 4) {
@@ -3052,13 +6152,17 @@ static LRESULT CALLBACK WndProc(HWND h, UINT m, WPARAM w, LPARAM l) {
             }
             if (w == 7) {  // автосворачивание
                 KillTimer(h, 7);
-                if (g_expand && !g_hover && !g_drag) {
+                if (g_expand && !g_hover && !g_drag && !g_searchActive) {
                     g_expand = false;
                     StartAnim(h);
                 }
                 return 0;
             }
             if (w == 8) {  // плавное движение шкалы воспроизведения и смена строки текста
+                if (g_searchActive && g_expand && IsWindowVisible(h)) {  // мигание курсора в поле поиска
+                    Render(h);
+                    return 0;
+                }
                 if (g_expand && g_expT >= 1.0 && g_stageT >= 1.0 && !g_drag && IsWindowVisible(h)) {
                     if (g_lyOpen && g_lyState == 2 && g_lySynced) {
                         int idx = LyCurIndex();
@@ -3102,19 +6206,67 @@ static LRESULT CALLBACK WndProc(HWND h, UINT m, WPARAM w, LPARAM l) {
             StartAnim(h);
             return 0;
         }
+        case WM_APP + 6: {  // ответ фонового потока Яндекс Музыки
+            YmRes* r = (YmRes*)l;
+            OwnOnResult(r);
+            delete r;
+            LyEnsure();  // трек мог смениться
+            StartAnim(h);
+            return 0;
+        }
+        case WM_APP + 7: {  // из окна ввода пришёл поисковый запрос
+            std::wstring* q = (std::wstring*)l;
+            if (OwnMode()) LibSearch(*q);
+            delete q;
+            StartAnim(h);
+            return 0;
+        }
+        case WM_APP + 8:  // события MediaPlayer: 1 — трек закончился, 2 — ошибка, 3 — открыт, 4/5 — «следующий»/«предыдущий»
+            if (OwnMode()) {
+                if (w == 1) OwnOnEnded();
+                else if (w == 2) OwnOnFailed();
+                else if (w == 3) OwnOnOpened();
+                else if (w == 4) OwnNext();
+                else if (w == 5) OwnPrev();
+            }
+            StartAnim(h);
+            return 0;
+        case WM_APP + 10:  // клавиша из хука ввода поиска: wParam — код (+0x100 при Ctrl), lParam — символ
+            if (g_searchActive) {
+                SearchKey((UINT)(w & 0xFF), (w & 0x100) != 0, (wchar_t)l);
+                if (g_searchActive) Render(h);
+            }
+            return 0;
+        case WM_APP + 9: {  // окно ввода запроса закрылось — если курсор не над плеером, запускаем обычное сворачивание
+            POINT pt;
+            RECT wr;
+            GetCursorPos(&pt);
+            GetWindowRect(h, &wr);
+            if (g_expand && !PtInRect(&wr, pt)) OnLeave(h);
+            StartAnim(h);
+            return 0;
+        }
         case WM_APP + 2:  // событие смены трека/состояния — небольшой debounce
             SetTimer(h, 2, 40, nullptr);
             return 0;
         case WM_APP + 3:  // смена активного/свёрнутого окна
         case WM_DISPLAYCHANGE:
         case WM_DPICHANGED:
+            if (m == WM_APP + 3 && g_searchActive && GetTickCount64() - g_searchBeganAt > 500)
+                SearchEnd(false);  // пользователь переключился в другое окно
             Present(h, false);
             return 0;
         case WM_APP + 1: {
             const std::string oldToken = g_set.geniusToken;
+            const std::string oldYm = g_set.ymToken;
+            const bool oldOwn = OwnMode();
             LoadSettings();
             if (g_set.geniusToken != oldToken && g_lyState == 3)
                 g_lyKey.clear();  // токен поменяли — ищем текст заново
+            if (g_set.ymToken != oldYm || OwnMode() != oldOwn) {  // токен или режим работы изменились
+                CloseSearchPopup();
+                OwnReconfigure();
+            }
             Layout();  // новая геометрия нужна до Poll, чтобы обложка пересчиталась сразу
             Tick(h);
             return 0;
@@ -3123,6 +6275,7 @@ static LRESULT CALLBACK WndProc(HWND h, UINT m, WPARAM w, LPARAM l) {
             DestroyWindow(h);
             return 0;
         case WM_DESTROY:
+            SearchShutdown();
             KillTimer(h, 1);
             KillTimer(h, 4);
             KillTimer(h, 5);
@@ -3167,6 +6320,8 @@ static DWORD WINAPI UiThread(LPVOID) {
         wc.lpszClassName, L"", WS_POPUP, 0, 0, 10, 10, nullptr, nullptr, wc.hInstance, nullptr);
     if (!g_hwnd) return 0;
 
+    YmStart();  // фоновые потоки Яндекс Музыки
+    if (OwnMode()) OwnReconfigure();
     SetTimer(g_hwnd, 1, 1000, nullptr);
     SetTimer(g_hwnd, 5, 250, nullptr);
     SetTimer(g_hwnd, 8, 250, nullptr);  // перерисовка шкалы в развёрнутом режиме
@@ -3185,6 +6340,8 @@ static DWORD WINAPI UiThread(LPVOID) {
     if (hookFg) UnhookWinEvent(hookFg);
     if (hookMin) UnhookWinEvent(hookMin);
     Unsubscribe();
+    YmStop();             // дожидаемся фоновых потоков
+    OwnShutdownPlayer();  // и гасим MediaPlayer
     g_hwnd = nullptr;
     UnregisterClassW(wc.lpszClassName, wc.hInstance);
     g_mgr = nullptr;
@@ -3208,7 +6365,7 @@ void Wh_ModUninit() {
     g_stopping = true;
     if (g_hwnd) PostMessageW(g_hwnd, WM_CLOSE, 0, 0);
     if (g_thread) {
-        WaitForSingleObject(g_thread, 5000);
+        WaitForSingleObject(g_thread, 20000);  // YmStop ждёт сетевые потоки
         CloseHandle(g_thread);
         g_thread = nullptr;
     }
